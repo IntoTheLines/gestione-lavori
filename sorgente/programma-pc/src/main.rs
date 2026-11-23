@@ -68,14 +68,27 @@ fn set_saved(app: tauri::AppHandle, p: String) -> Result<(), String> {
     fs::write(cfg_path(&app), serde_json::to_string_pretty(&c).unwrap()).map_err(|e| e.to_string())
 }
 #[tauri::command]
-async fn pick(app: tauri::AppHandle, mode: String) -> Option<String> {
-    let d = rfd::FileDialog::new().add_filter("Archivio lavori", &["json"]).set_directory(start_dir(&app));
+async fn pick(app: tauri::AppHandle, mode: String, name: Option<String>) -> Option<String> {
+    let d = rfd::FileDialog::new().set_directory(start_dir(&app));
     let r = match mode.as_str() {
-        "open" => d.set_title("Scegli il file archivio-lavori.json").pick_file(),
-        "backup" => d.set_title("Salva backup").set_file_name(&format!("backup-lavori.json")).save_file(),
-        _ => d.set_title("Dove creare l'archivio").set_file_name("archivio-lavori.json").save_file(),
+        "pdf" | "csv" => {
+            let dir = std::env::var("USERPROFILE").map(|h| PathBuf::from(h).join("Documents")).ok().filter(|p| p.exists()).unwrap_or_else(|| start_dir(&app));
+            let (lab, ext) = if mode == "pdf" { ("PDF", "pdf") } else { ("Excel (CSV)", "csv") };
+            rfd::FileDialog::new().set_directory(dir).add_filter(lab, &[ext]).set_title("Salva file")
+                .set_file_name(name.as_deref().unwrap_or("lavori")).save_file()
+        }
+        "open" => d.add_filter("Archivio lavori", &["json"]).set_title("Scegli il file archivio-lavori.json").pick_file(),
+        "backup" => d.add_filter("Archivio lavori", &["json"]).set_title("Salva backup").set_file_name("backup-lavori.json").save_file(),
+        _ => d.add_filter("Archivio lavori", &["json"]).set_title("Dove creare l'archivio").set_file_name("archivio-lavori.json").save_file(),
     };
     r.map(|p| p.to_string_lossy().to_string())
+}
+#[tauri::command]
+fn open_file(p: String) {
+    #[cfg(windows)]
+    { let _ = std::process::Command::new("explorer").arg(&p).spawn(); }
+    #[cfg(not(windows))]
+    { let _ = p; }
 }
 #[tauri::command]
 fn read(p: String) -> Result<serde_json::Value, String> {
@@ -154,7 +167,7 @@ fn daily_backup(p: String, giorno: String) -> Result<(), String> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_saved, set_saved, pick, read, write, show, app_info, update_self, daily_backup])
+        .invoke_handler(tauri::generate_handler![get_saved, set_saved, pick, open_file, read, write, show, app_info, update_self, daily_backup])
         .run(tauri::generate_context!())
         .expect("errore avvio");
 }

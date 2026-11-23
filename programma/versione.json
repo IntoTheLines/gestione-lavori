@@ -1,4 +1,4 @@
 {
-  "versione": "1.3.1",
-  "note": "Nuova sezione Appunti, numero fattura, aggiornamenti automatici da GitHub."
+  "versione": "1.4.0",
+  "note": "Esporta in PDF o Excel i lavori di un cliente."
 }

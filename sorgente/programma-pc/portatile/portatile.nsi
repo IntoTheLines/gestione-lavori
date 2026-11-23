@@ -7,14 +7,14 @@ Icon "icon.ico"
 RequestExecutionLevel user
 SilentInstall silent
 SetCompressor /SOLID lzma
-VIProductVersion "1.3.1.0"
+VIProductVersion "1.4.0.0"
 VIAddVersionKey "ProductName" "Gestione Lavori"
 VIAddVersionKey "FileDescription" "Gestione Lavori"
-VIAddVersionKey "FileVersion" "1.3.1"
+VIAddVersionKey "FileVersion" "1.4.0"
 VIAddVersionKey "CompanyName" "Jacopo"
 VIAddVersionKey "LegalCopyright" "Jacopo"
 Section
-  !define VER "1.3.1"
+  !define VER "1.4.0"
   SetOutPath "$LOCALAPPDATA\Gestione Lavori\app-${VER}"
   SetOverwrite try
   File "WebView2Loader.dll"
