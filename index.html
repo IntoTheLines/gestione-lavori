@@ -134,11 +134,11 @@ dialog::backdrop{background:rgba(20,25,35,.45)}
   main{padding:12px 12px calc(86px + env(safe-area-inset-bottom))}
   input,select,textarea,button.b{font-size:16px;min-height:42px}
   .bar{gap:8px}
-  .bar #q,.bar #qc,.bar #qa{flex:1 1 100%;min-width:0!important;order:-1}
+  .bar #q,.bar #qc,.bar #qa,.bar #qn{flex:1 1 100%;min-width:0!important;order:-1}
   .bar select{flex:1 1 calc(50% - 4px);min-width:0}
   .bar .hint{flex:1 1 100%}
   #viewSw{flex:1 1 100%}#viewSw button{flex:1;min-height:40px}
-  #btnNewJob,#btnNewCli{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:21;border-radius:28px;padding:14px 20px;box-shadow:0 6px 18px rgba(123,104,238,.45);font-weight:600}
+  #btnNewJob,#btnNewCli,#btnNewNote{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:21;border-radius:28px;padding:14px 20px;box-shadow:0 6px 18px rgba(123,104,238,.45);font-weight:600}
   .sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   .sum div{padding:8px 10px;min-width:0}.sum b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .sum span{font-size:11px}.netto{font-size:11px}
@@ -177,12 +177,31 @@ dialog::backdrop{background:rgba(20,25,35,.45)}
   .db{grid-template-columns:1fr 1fr}
   #clientsWrap th:nth-child(4),#clientsWrap td:nth-child(4){display:table-cell}
 }
+
+/* ----- Appunti ----- */
+.nlist{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.ncard{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:8px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.ncard:hover{box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.ncard.done{opacity:.55}.ncard.done .ntxt{text-decoration:line-through}
+.ncard.nlate{border-left-color:var(--red)}.ncard.ntoday{border-left-color:var(--amber)}
+.ncard .ck{width:22px;height:22px;min-height:0;flex:none;margin:1px 0 0;accent-color:var(--acc)}
+.nbody{flex:1;min-width:0}
+.ndate{font-size:12px;font-weight:600;color:var(--muted)}.nlate .ndate{color:var(--red)}.ntoday .ndate{color:var(--amber)}
+.ntxt{white-space:pre-wrap;margin:3px 0 6px;word-break:break-word}
+.nchips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{font-size:12px;background:#f0f2f5;border-radius:999px;padding:2px 9px;color:#374151}.chip.sh{background:#efedfd;color:var(--acc)}
+.chip.lk{cursor:pointer}.chip.lk:hover{background:#e2e5ea}
+.nh{font-weight:700;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:16px 2px 8px}
+.nh:first-child{margin-top:4px}
+.chk{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;color:var(--ink)!important;font-size:14px!important}
+.chk input{width:20px;height:20px;min-height:0}
+@media (max-width:900px){.tabs button[data-tab=appunti]::before{content:"📝"}}
 </style>
 </head>
 <body>
 <header>
   <h1>📋 Gestione Lavori</h1>
-  <div class="tabs"><button data-tab="lavori" class="on">I miei lavori</button><button data-tab="team">Team</button><button data-tab="clienti">Clienti</button><button data-tab="archivio">Archivio</button></div>
+  <div class="tabs"><button data-tab="lavori" class="on">I miei lavori</button><button data-tab="appunti">Appunti</button><button data-tab="team">Team</button><button data-tab="clienti">Clienti</button><button data-tab="archivio">Archivio</button></div>
   <div class="spacer"></div>
   <span id="saveState"></span>
   <button class="b" id="btnCloud" title="Archivio online condiviso">☁ Online</button>
@@ -216,6 +235,16 @@ dialog::backdrop{background:rgba(20,25,35,.45)}
     <div id="jobsWrap"></div>
   </section>
 
+  <section id="tab-appunti" hidden>
+    <div class="bar">
+      <button class="b p" id="btnNewNote">+ Nuovo appunto</button>
+      <input id="qn" placeholder="Cerca negli appunti…" style="min-width:200px">
+      <select id="fNote"><option value="tutti">Miei e condivisi</option><option value="miei">Solo i miei</option><option value="team">Condivisi dal team</option></select>
+      <label class="hint chk"><input type="checkbox" id="fNoteDone"> Mostra fatti</label>
+    </div>
+    <div id="notesWrap"></div>
+  </section>
+
   <section id="tab-clienti" hidden>
     <div class="bar">
       <button class="b p" id="btnNewCli">+ Nuovo cliente</button>
@@ -235,6 +264,23 @@ dialog::backdrop{background:rgba(20,25,35,.45)}
   </section>
 </main>
 
+<dialog id="dNote">
+  <form method="dialog" id="formNote">
+    <div class="dh" id="dNoteTitle">Appunto</div>
+    <div class="db">
+      <label>Data<input type="date" id="nData"></label>
+      <label>Ora (facoltativa)<input type="time" id="nOra"></label>
+      <label class="full">Appunto<textarea id="nTesto" required style="min-height:120px" placeholder="Scrivi qui…"></textarea></label>
+      <label>Cliente (facoltativo)<select id="nCli"></select></label>
+      <label>Lavoro (facoltativo)<select id="nJob"></select></label>
+      <label class="full chk"><input type="checkbox" id="nShare"> 👥 Condividi con il team</label>
+      <label class="full chk"><input type="checkbox" id="nDone"> ✔ Fatto</label>
+    </div>
+    <div class="df"><button type="button" class="b d" id="btnDelNote">Elimina</button><div class="spacer"></div>
+      <button type="button" class="b" onclick="this.closest('dialog').close()">Annulla</button><button class="b p" id="btnSaveNote">Salva</button></div>
+  </form>
+</dialog>
+
 <dialog id="dJob">
   <form method="dialog" id="formJob">
     <div class="dh" id="dJobTitle">Lavoro</div>
@@ -250,6 +296,7 @@ dialog::backdrop{background:rgba(20,25,35,.45)}
       <label>Importo totale (€)<input type="number" id="jImp" min="0" step="0.01"></label>
       <label>Già incassato (€)<input type="number" id="jPaid" min="0" step="0.01"></label>
       <label>Modalità di pagamento<select id="jTerm"></select></label>
+      <label>N° fattura<input id="jNum" placeholder="es. 12/2026"></label>
       <label>Data fattura<input type="date" id="jInv"></label>
       <label>Scadenza pagamento<input type="date" id="jScad"><span class="hint" id="jScadHint"></span></label>
       <label>Pagato il<input type="date" id="jPayDate"></label>
@@ -257,7 +304,7 @@ dialog::backdrop{background:rgba(20,25,35,.45)}
       <label class="full">Note<textarea id="jNote"></textarea></label>
     </div>
     <div class="df">
-      <button type="button" class="b d" id="btnDelJob">Elimina</button>
+      <button type="button" class="b" id="btnJobNote" title="Nuovo appunto collegato a questo lavoro">📝 Appunto</button><button type="button" class="b d" id="btnDelJob">Elimina</button>
       <div class="spacer"></div>
       <button type="button" class="b" value="cancel" onclick="this.closest('dialog').close()">Annulla</button>
       <button class="b p" id="btnSaveJob">Salva</button>
@@ -341,14 +388,14 @@ const cliName=id=>(db.clienti.find(c=>c.id===id)||{}).nome||"—";
 
 /* ---------- Salvataggio ---------- */
 const DEF_USERS=[{id:"u-jacopo",nome:"Jacopo",mod:0},{id:"u-stefania",nome:"Stefania",mod:0}];
-function norm(d){d.clienti??=[];d.lavori??=[];d.eliminati??={};d.utenti??=[];
+function norm(d){d.clienti??=[];d.lavori??=[];d.eliminati??={};d.utenti??=[];d.appunti??=[];
   DEF_USERS.forEach(u=>{if(!d.utenti.some(x=>x.id===u.id)&&!d.eliminati[u.id])d.utenti.push({...u})});return d}
 function load(){try{const r=localStorage.getItem(LS);if(r)db=JSON.parse(r)}catch(e){} norm(db)}
 // unisce due versioni dei dati: per ogni scheda vince la modifica più recente
 function merge(a,b){a=norm(a);b=norm(b);const del={...a.eliminati};
   for(const[k,v]of Object.entries(b.eliminati))del[k]=Math.max(del[k]||0,v);
   const out={eliminati:del};
-  for(const kind of["clienti","lavori","utenti"]){const m=new Map();
+  for(const kind of["clienti","lavori","utenti","appunti"]){const m=new Map();
     for(const r of[...a[kind],...b[kind]]){const o=m.get(r.id);if(!o||(r.mod||0)>(o.mod||0))m.set(r.id,r)}
     out[kind]=[...m.values()].filter(r=>!(del[r.id]>=(r.mod||0)))}
   return norm(out)}
@@ -422,7 +469,7 @@ $("#fileImport").onchange=async e=>{
 /* ---------- Schede ---------- */
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
-  tab=b.dataset.tab;$("#tab-lavori").hidden=tab==="clienti"||tab==="archivio";$("#tab-clienti").hidden=tab!=="clienti";$("#tab-archivio").hidden=tab!=="archivio";
+  tab=b.dataset.tab;$("#tab-lavori").hidden=tab==="clienti"||tab==="archivio"||tab==="appunti";$("#tab-appunti").hidden=tab!=="appunti";$("#tab-clienti").hidden=tab!=="clienti";$("#tab-archivio").hidden=tab!=="archivio";
   $("#fUser").hidden=tab!=="team";$("#btnNewJob").hidden=tab==="team";render();
 });
 
@@ -442,7 +489,7 @@ function renderJobs(){
     if(fc&&j.cliente!==fc)return false;
     if(fs==="attivi"?j.stato==3:(fs!==""&&j.stato!=fs))return false;
     const ps=pagStato(j);if(fp==="aperti"?(ps===2||ps===-1):(fp!==""&&ps!=fp))return false;
-    if(q&&!(j.descrizione+" "+cliName(j.cliente)+" "+(j.note||"")).toLowerCase().includes(q))return false;
+    if(q&&!(j.descrizione+" "+cliName(j.cliente)+" "+(j.note||"")+" "+(j.numFattura||"")).toLowerCase().includes(q))return false;
     return true});
   const val={cliente:j=>cliName(j.cliente).toLowerCase(),descrizione:j=>j.descrizione.toLowerCase(),due:j=>j.consegna||"9999",stato:j=>+j.stato,prog:j=>+j.avanzamento,imp:j=>+j.importo||0,pag:j=>pagStato(j),scad:j=>pagStato(j)===2?"9999":(scadOf(j)||"9998")};
   list.sort((a,b)=>{const x=val[sortKey](a),y=val[sortKey](b);return (x>y?1:x<y?-1:0)*sortDir});
@@ -487,7 +534,7 @@ function renderJobs(){
       <div class="grph" data-st="${g.i}"><span class="caret">▾</span><span class="gtag" style="background:${COL[g.i]}">${g.s.toUpperCase()}</span><span class="cnt">${g.items.length}</span></div>
       <div class="mgrid">${g.items.map(j=>{const dc=dueCls(j);return `<div class="card" style="--c:${COL[g.i]}" data-id="${j.id}">
         <div class="ct">${esc(j.descrizione)}</div>${own(j)}<div class="hint">${esc(cliName(j.cliente))}</div>
-        <div class="cm">${j.consegna?`<span class="${dc}">📅 ${fmtD(j.consegna)}${dc==="late"?" ⚠":""}</span>`:"<span></span>"}${j.importo?`<b>${eur(j.importo)}</b>`:""}</div>
+        <div class="cm">${j.consegna?`<span class="${dc}">📅 ${fmtD(j.consegna)}${dc==="late"?" ⚠":""}</span>`:"<span></span>"}${j.importo?`<b>${eur(j.importo)}${j.numFattura?` <span class="hint" style="font-weight:400">· Fatt. ${esc(j.numFattura)}</span>`:""}</b>`:""}</div>
         ${pagStato(j)>=0&&(scadOf(j)||j.dataPagamento)?`<div class="cm"><span class="hint">💶 ${pagStato(j)===2?"Pagato":"Scadenza"}</span><span>${payDateHtml(j)}</span></div>`:""}
         <div class="cm"><span><span class="prog"><i style="width:${+j.avanzamento||0}%"></i></span>${+j.avanzamento||0}%</span>${pagHtml(j)}</div>
         ${j.note?`<div class="note" style="margin-top:6px">${esc(j.note)}</div>`:""}</div>`}).join("")}</div></div>`).join("");
@@ -504,7 +551,7 @@ function renderJobs(){
       return `<tr class="row" data-id="${j.id}" style="box-shadow:inset 3px 0 ${COL[g.i]}"><td><b>${esc(j.descrizione)}</b>${own(j)}</td><td>${esc(cliName(j.cliente))}</td>
       <td class="${dc}">${fmtD(j.consegna)}${dc==="late"?" ⚠":""}</td>
       <td><span class="prog"><i style="width:${+j.avanzamento||0}%"></i></span>${+j.avanzamento||0}%</td>
-      <td class="num">${j.importo?eur(j.importo):""}</td><td>${pagHtml(j)}</td><td>${payDateHtml(j)}</td>
+      <td class="num">${j.importo?eur(j.importo):""}${j.numFattura?`<div class="hint">Fatt. ${esc(j.numFattura)}</div>`:""}</td><td>${pagHtml(j)}</td><td>${payDateHtml(j)}</td>
       <td><div class="note">${esc(j.note)}</div></td></tr>`}).join("")}</tbody></table></div>`).join("");
   $("#jobsWrap").querySelectorAll(".grph").forEach(h=>h.onclick=()=>{collapsed[h.dataset.st]=!collapsed[h.dataset.st];renderJobs()});
   $("#jobsWrap").querySelectorAll("th[data-k]").forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortDir=sortKey===k?-sortDir:1;sortKey=k;renderJobs()});
@@ -534,9 +581,9 @@ function openJob(j){
   $("#jDesc").value=j?.descrizione||"";$("#jDue").value=j?.consegna||"";$("#jStato").value=j?.stato??0;
   $("#jProg").value=j?.avanzamento??0;$("#jProgVal").textContent=($("#jProg").value)+"%";
   $("#jImp").value=j?.importo??"";$("#jPaid").value=j?.incassato??"";$("#jPayDate").value=j?.dataPagamento||"";
-  $("#jTerm").value=j?.modalita||"";$("#jInv").value=j?.dataFattura||"";
+  $("#jTerm").value=j?.modalita||"";$("#jInv").value=j?.dataFattura||"";$("#jNum").value=j?.numFattura||"";
   $("#jScad").dataset.manual=j?.scadenza?"1":"";$("#jScad").value=j?.scadenza||"";updScad();$("#jNote").value=j?.note||"";
-  $("#btnDelJob").style.visibility=j?"visible":"hidden";$("#newCli").classList.remove("on");updPagLabel();
+  $("#btnDelJob").style.visibility=j?"visible":"hidden";$("#btnJobNote").style.display=j?"":"none";$("#newCli").classList.remove("on");updPagLabel();
   $("#dJob").showModal();
 }
 $("#btnNewJob").onclick=()=>openJob();
@@ -546,7 +593,7 @@ $("#formJob").onsubmit=e=>{
   if(!j){j=editJob||{id:uid(),creato:today(),utente:me};db.lavori.push(j)}
   Object.assign(j,{cliente:$("#jCli").value,descrizione:$("#jDesc").value.trim(),consegna:$("#jDue").value,stato:+$("#jStato").value,
     avanzamento:+$("#jProg").value,importo:$("#jImp").value===""?"":+$("#jImp").value,incassato:$("#jPaid").value===""?"":+$("#jPaid").value,
-    dataPagamento:$("#jPayDate").value,modalita:$("#jTerm").value,dataFattura:$("#jInv").value,
+    dataPagamento:$("#jPayDate").value,modalita:$("#jTerm").value,dataFattura:$("#jInv").value,numFattura:$("#jNum").value.trim(),
     scadenza:$("#jScad").dataset.manual?$("#jScad").value:"",note:$("#jNote").value});
   touch(j);delete db.eliminati[j.id];
   save();$("#dJob").close();render();
@@ -570,7 +617,7 @@ function renderArchive(){
   const sel=$("#aUser"),cur=sel.value||sel.dataset.v||me||"";
   sel.innerHTML='<option value="">Tutti</option>'+db.utenti.map(u=>`<option value="${u.id}">${esc(u.nome)}</option>`).join("");sel.value=cur;sel.dataset.v=cur;
   const q=$("#qa").value.toLowerCase(),scope=sel.value;
-  const list=db.lavori.filter(j=>isArch(j)&&(!scope||utOf(j)===scope)&&(!q||(j.descrizione+" "+cliName(j.cliente)+" "+(j.note||"")).toLowerCase().includes(q)));
+  const list=db.lavori.filter(j=>isArch(j)&&(!scope||utOf(j)===scope)&&(!q||(j.descrizione+" "+cliName(j.cliente)+" "+(j.note||"")+" "+(j.numFattura||"")).toLowerCase().includes(q)));
   if(!list.length){$("#archWrap").innerHTML='<div class="empty">'+(q?'Nessun lavoro archiviato corrisponde alla ricerca.':'Archivio vuoto. I lavori arrivano qui quando sono <b>Consegnati</b> e <b>Pagati</b>.')+'</div>';return}
   const tot=a=>a.reduce((s,j)=>s+(+j.importo||0),0);
   const money=a=>{const t=tot(a);return `${eur(t)}<small>netto ≈ ${eur(t*(1-TAX/100))}</small>`};
@@ -586,7 +633,7 @@ function renderArchive(){
       return `<details class="ayr" data-k="${yk}"${openAll||archOpen[yk]?" open":""}><summary><b>${esc(y)}</b><span class="hint">${ys.length} lavor${ys.length===1?"o":"i"}</span><span class="atot">${money(ys)}</span></summary>
       <table><thead><tr><th>Lavoro</th><th>Consegna</th><th>Pagato il</th><th style="text-align:right">Importo</th><th>Note</th></tr></thead><tbody>
       ${ys.map(j=>`<tr class="row" data-id="${j.id}"><td><b>${esc(j.descrizione)}</b>${!scope?`<div class="owner">${avatar(utOf(j),1)} ${esc(userName(utOf(j)))}</div>`:""}</td><td>${fmtD(j.consegna)}</td>
-        <td>${j.dataPagamento?fmtD(j.dataPagamento):'<span class="hint">—</span>'}</td><td class="num">${eur(j.importo)}</td><td><div class="note">${esc(j.note)}</div></td></tr>`).join("")}
+        <td>${j.dataPagamento?fmtD(j.dataPagamento):'<span class="hint">—</span>'}</td><td class="num">${eur(j.importo)}${j.numFattura?`<div class="hint">Fatt. ${esc(j.numFattura)}</div>`:""}</td><td><div class="note">${esc(j.note)}</div></td></tr>`).join("")}
       </tbody></table></details>`}).join("")}</details>`}).join("");
   const w=$("#archWrap");
   w.querySelectorAll("details").forEach(d=>d.ontoggle=()=>{if(!openAll)archOpen[d.dataset.k]=d.open});
@@ -604,6 +651,64 @@ $("#btnMore").onclick=e=>{e.stopPropagation();document.querySelector("header").c
 document.addEventListener("click",e=>{if(!e.target.closest("header"))document.querySelector("header").classList.remove("more")});
 let _rsz,_wasNarrow=isNarrow();
 window.addEventListener("resize",()=>{clearTimeout(_rsz);_rsz=setTimeout(()=>{const n=isNarrow();if(n!==_wasNarrow||n){_wasNarrow=n;render()}},200)});
+
+/* ---------- Appunti ---------- */
+let editNote=null;
+const noteVis=n=>n.utente===me||n.condiviso;
+function fillNoteSelects(cli,job){
+  const cs=[...db.clienti].sort((a,b)=>a.nome.localeCompare(b.nome));
+  $("#nCli").innerHTML='<option value="">— nessuno —</option>'+cs.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join("");
+  $("#nCli").value=cli||"";fillNoteJobs(job)}
+function fillNoteJobs(job){
+  const c=$("#nCli").value;
+  const js=db.lavori.filter(j=>!c||j.cliente===c).sort((a,b)=>(b.consegna||"").localeCompare(a.consegna||""));
+  $("#nJob").innerHTML='<option value="">— nessuno —</option>'+js.map(j=>`<option value="${j.id}">${esc(j.descrizione)}${c?"":" · "+esc(cliName(j.cliente))}</option>`).join("");
+  $("#nJob").value=js.some(j=>j.id===job)?job:""}
+$("#nCli").onchange=()=>fillNoteJobs($("#nJob").value);
+$("#nJob").onchange=()=>{const j=db.lavori.find(x=>x.id===$("#nJob").value);if(j&&!$("#nCli").value){$("#nCli").value=j.cliente||"";fillNoteJobs(j.id)}};
+function openNote(n,pre){
+  editNote=n||null;const ro=!!n&&n.utente!==me;
+  $("#dNote").classList.toggle("ro",ro);
+  $("#formNote").querySelectorAll(".db input,.db select,.db textarea").forEach(el=>el.disabled=ro);
+  $("#dNoteTitle").innerHTML=ro?`Appunto di ${esc(userName(n.utente))} <span class="hint">(solo consultazione)</span>`:n?"Modifica appunto":"Nuovo appunto";
+  $("#nData").value=n?n.data||"":(pre?.data??today());$("#nOra").value=n?.ora||"";$("#nTesto").value=n?.testo||"";
+  fillNoteSelects(n?.cliente??pre?.cliente,n?.lavoro??pre?.lavoro);
+  $("#nShare").checked=n?!!n.condiviso:!!pre?.condiviso;$("#nDone").checked=!!n?.fatto;
+  $("#btnDelNote").style.visibility=n&&!ro?"visible":"hidden";$("#btnSaveNote").style.display=ro?"none":"";
+  $("#dNote").showModal();if(!n)setTimeout(()=>$("#nTesto").focus(),50)}
+$("#formNote").onsubmit=e=>{
+  e.preventDefault();if(editNote&&editNote.utente!==me)return;
+  let n=editNote?db.appunti.find(x=>x.id===editNote.id):null;
+  if(!n){n={id:uid(),creato:today(),utente:me};db.appunti.push(n)}
+  Object.assign(n,{data:$("#nData").value,ora:$("#nOra").value,testo:$("#nTesto").value.trim(),cliente:$("#nCli").value,lavoro:$("#nJob").value,
+    condiviso:$("#nShare").checked,fatto:$("#nDone").checked});
+  touch(n);delete db.eliminati[n.id];save();$("#dNote").close();render()};
+$("#btnDelNote").onclick=()=>{if(editNote&&confirm("Eliminare questo appunto?")){db.appunti=db.appunti.filter(x=>x.id!==editNote.id);markDel(editNote.id);save();$("#dNote").close();render()}};
+$("#btnNewNote").onclick=()=>openNote();
+$("#qn").oninput=()=>renderNotes();$("#fNote").onchange=()=>renderNotes();$("#fNoteDone").onchange=()=>renderNotes();
+function renderNotes(){
+  const q=$("#qn").value.toLowerCase(),f=$("#fNote").value,showDone=$("#fNoteDone").checked,t=today();
+  const jobName=id=>(db.lavori.find(j=>j.id===id)||{}).descrizione;
+  let list=db.appunti.filter(n=>noteVis(n)&&(f==="tutti"||(f==="miei"?n.utente===me:n.utente!==me))&&(showDone||!n.fatto)
+    &&(!q||(n.testo+" "+cliName(n.cliente)+" "+(jobName(n.lavoro)||"")).toLowerCase().includes(q)));
+  if(!list.length){$("#notesWrap").innerHTML=`<div class="empty">${db.appunti.some(noteVis)?"Nessun appunto da mostrare.":"Nessun appunto. Clicca <b>+ Nuovo appunto</b>: scegli tu la data, e se vuoi lo colleghi a un cliente o a un lavoro."}</div>`;return}
+  const key=n=>(n.data||"9999")+(n.ora||"99");list.sort((a,b)=>key(a).localeCompare(key(b)));
+  const grp=n=>n.fatto?"Fatti":!n.data?"Senza data":n.data<t?"In ritardo":n.data===t?"Oggi":"Prossimi";
+  const order=["In ritardo","Oggi","Prossimi","Senza data","Fatti"];
+  const card=n=>{const g=grp(n),cls=n.fatto?"done":g==="In ritardo"?"nlate":g==="Oggi"?"ntoday":"";const mine=n.utente===me;
+    const jn=n.lavoro&&jobName(n.lavoro);
+    return `<div class="ncard ${cls}" data-id="${n.id}">${mine?`<input type="checkbox" class="ck" data-id="${n.id}" ${n.fatto?"checked":""} title="Fatto">`:""}
+      <div class="nbody"><div class="ndate">${n.data?"📅 "+fmtD(n.data)+(n.ora?" · "+n.ora:""):"Senza data"}</div>
+      <div class="ntxt">${esc(n.testo)}</div>
+      <div class="nchips">${n.cliente?`<span class="chip">🏢 ${esc(cliName(n.cliente))}</span>`:""}${jn?`<span class="chip lk" data-job="${n.lavoro}">📋 ${esc(jn)}</span>`:""}
+      ${n.condiviso?'<span class="chip sh">👥 Condiviso</span>':""}${!mine?`<span class="owner">${avatar(n.utente,1)} ${esc(userName(n.utente))}</span>`:""}</div></div></div>`};
+  $("#notesWrap").innerHTML=order.map(g=>{const it=list.filter(n=>grp(n)===g);return it.length?`<div class="nh">${g} · ${it.length}</div><div class="nlist">${it.map(card).join("")}</div>`:""}).join("");
+  const w=$("#notesWrap");
+  w.querySelectorAll(".ncard").forEach(c=>c.onclick=e=>{if(e.target.closest(".ck,.lk"))return;openNote(db.appunti.find(n=>n.id===c.dataset.id))});
+  w.querySelectorAll(".ck").forEach(c=>c.onchange=()=>{const n=db.appunti.find(x=>x.id===c.dataset.id);if(n){n.fatto=c.checked;touch(n);save();renderNotes()}});
+  w.querySelectorAll(".lk").forEach(c=>c.onclick=()=>{const j=db.lavori.find(x=>x.id===c.dataset.job);if(j)openJob(j)});
+}
+$("#btnJobNote").onclick=()=>{const j=editJob;$("#dJob").close();openNote(null,{cliente:j?.cliente,lavoro:j?.id})};
 
 /* ---------- Clienti ---------- */
 function renderClients(){
@@ -643,7 +748,7 @@ function fillUsers(){
   if(me)$("#userChip").innerHTML=`${avatar(me,1)} ${esc(userName(me))} ▾`;
 }
 $("#fUser").addEventListener("input",renderJobs);
-function render(){fillUsers();fillCliSelects($("#jCli").value);renderJobs();renderClients();renderArchive()}
+function render(){fillUsers();fillCliSelects($("#jCli").value);renderJobs();renderClients();renderArchive();renderNotes()}
 let lastUser="";try{lastUser=localStorage.getItem(LS+"-user")||""}catch(e){}
 function showLogin(){
   $("#ulist").innerHTML=db.utenti.map(u=>`<button class="ubtn${u.id===lastUser?" last":""}" data-id="${u.id}">${avatar(u.id)}<span>${esc(u.nome)}</span></button>`).join("");
@@ -676,12 +781,12 @@ async function cloudSync(){
   if(syncing){syncAgain=true;return}syncing=true;
   try{
     const rows=await rpc("lavori_leggi",{codice:cloud.codice});
-    const rem={clienti:[],lavori:[],utenti:[],eliminati:{}};remoteMod={};
+    const rem={clienti:[],lavori:[],utenti:[],appunti:[],eliminati:{}};remoteMod={};
     for(const r of rows){remoteMod[r.id]=+r.mod;if(r.eliminato)rem.eliminati[r.id]=+r.mod;else if(rem[r.tipo]&&r.dati)rem[r.tipo].push(r.dati)}
     const before=JSON.stringify(db);
     db=merge(db,rem);
     const out=[];
-    for(const kind of["clienti","lavori","utenti"])for(const x of db[kind]){const m=x.mod||0;if(!(x.id in remoteMod)||remoteMod[x.id]<m)out.push({id:x.id,tipo:kind,dati:x,mod:m,eliminato:false})}
+    for(const kind of["clienti","lavori","utenti","appunti"])for(const x of db[kind]){const m=x.mod||0;if(!(x.id in remoteMod)||remoteMod[x.id]<m)out.push({id:x.id,tipo:kind,dati:x,mod:m,eliminato:false})}
     for(const[id,t]of Object.entries(db.eliminati))if(!(id in remoteMod)||remoteMod[id]<t)out.push({id,tipo:"del",dati:null,mod:t,eliminato:true});
     for(let i=0;i<out.length;i+=200)await rpc("lavori_scrivi",{codice:cloud.codice,righe:out.slice(i,i+200)});
     out.forEach(o=>remoteMod[o.id]=o.mod);

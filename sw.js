@@ -1,5 +1,5 @@
 // Gestione Lavori - funziona anche senza rete. La pagina si aggiorna da sola quando c'e' internet.
-const C="lavori-v2";
+const C="lavori-v3";
 const FILES=["./","./index.html","./manifest.webmanifest","./icon-192.png","./icon-512.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(FILES)));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))));self.clients.claim()});
