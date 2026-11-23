@@ -171,9 +171,8 @@ dialog::backdrop{background:rgba(20,25,35,.45)}
 }
 /* Fold aperto (schermo largo quasi quadrato): due colonne, schede a lato */
 @media (min-width:600px) and (max-width:900px){
-  .mgrid{grid-template-columns:1fr 1fr}
+  .mgrid{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
   .board{grid-auto-columns:calc(50% - 6px)}
-  .sum{grid-template-columns:repeat(3,minmax(0,220px))}
   dialog{width:min(640px,72vw);height:100dvh;margin:0 0 0 auto;border-radius:16px 0 0 16px;box-shadow:-10px 0 40px rgba(0,0,0,.25)}
   .db{grid-template-columns:1fr 1fr}
   #clientsWrap th:nth-child(4),#clientsWrap td:nth-child(4){display:table-cell}
