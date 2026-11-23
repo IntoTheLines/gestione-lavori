@@ -46,8 +46,8 @@ function pdfLavori(cid,list,opt){
   const head=()=>{c+=`0.95 g ${M} ${(y-6).toFixed(1)} ${W} 20 re f 0 g\n`;let x=M+6;
     cols.forEach(k=>{k.r?TR(x+k.w-12,y,k.t,9,1):T(x,y,k.t,9,1);x+=k.w});y-=22};
   const newPage=first=>{if(c)pages.push(c);c="";y=800;
-    T(M,y,"Gestione Lavori",9,0,"0.48 0.41 0.93");TR(M+W,y,"Generato il "+fmtD(today()),9);y-=26;
-    if(first){T(M,y,"Lavori - "+cliName(cid),18,1);y-=18;T(M,y,opt.sub,10,0,"0.42 0.45 0.5");y-=26}
+    TR(M+W,y,"Generato il "+fmtD(today()),9);y-=26;
+    if(first){T(M,y,cliName(cid),18,1);y-=18;T(M,y,opt.sub,10,0,"0.42 0.45 0.5");y-=26}
     head()};
   newPage(true);
   const fz=9.5;let tot=0,inc=0;
@@ -62,7 +62,7 @@ function pdfLavori(cid,list,opt){
   if(!list.length){T(M+6,y,"Nessun lavoro per i criteri scelti.",10,0,"0.42 0.45 0.5");y-=20}
   if(y<120)newPage(false);
   y-=6;const rx=M+W-6,lx=M+W-230;
-  [["Totale lavori",tot,1],["Incassato",inc,0],["Da incassare",tot-inc,1]].forEach(([k,v,b])=>{T(lx,y,k,10,b);TR(rx,y,eur(v),10,b);y-=16});
+  [["Totale",tot,1]].forEach(([k,v,b])=>{T(lx,y,k,10,b);TR(rx,y,eur(v),10,b);y-=16});
   pages.push(c);
   return pdfBuild(pages.map((p,i)=>p+`BT /F1 8 Tf 0.5 g ${M+W/2-20} 28 Td (${pdfEsc("Pagina "+(i+1)+" di "+pages.length)}) Tj ET\n`))}
 async function savePdf(name,str){
@@ -83,9 +83,8 @@ function openPdf(cid){const cs=[...db.clienti].sort((a,b)=>a.nome.localeCompare(
 ["#pCli","#pDal","#pAl","#pTipo","#pChi"].forEach(s=>$(s).addEventListener("input",pdfInfo));
 $("#formPdf").onsubmit=async e=>{e.preventDefault();const cid=$("#pCli").value;if(!cid)return;
   const dal=$("#pDal").value,al=$("#pAl").value,tipo=$("#pTipo").value;
-  const sub=[dal||al?`Consegne ${dal?"dal "+fmtD(dal):""} ${al?"al "+fmtD(al):""}`.trim():"Tutti i periodi",
-    {tutti:"tutti i lavori",aperti:"solo da incassare",pagati:"solo pagati"}[tipo]].join(" - ");
-  const list=pdfList();const str=pdfLavori(cid,list,{sub:sub+` - ${list.length} lavor${list.length===1?"o":"i"}`});
+  const sub=dal||al?`Periodo: ${dal?"dal "+fmtD(dal):""} ${al?"al "+fmtD(al):""}`.trim():"Tutti i periodi";
+  const list=pdfList();const str=pdfLavori(cid,list,{sub});
   const nm=("Lavori "+cliName(cid)+" "+today()).replace(/[\\/:*?"<>|]+/g,"-")+".pdf";
   $("#dPdf").close();try{await savePdf(nm,str)}catch(err){alert("PDF non salvato: "+(err.message||err))}};
 $("#btnPdf").onclick=()=>openPdf();
