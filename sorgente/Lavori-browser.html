@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestione Lavori</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--ink:#1d2330;--muted:#6b7280;--line:#e3e6eb;--acc:#2563eb;--acc2:#1e4fc2;--red:#dc2626;--amber:#d97706;--green:#16a34a;--gray:#9ca3af}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+h1{font-size:18px;margin:0 12px 0 0}
+.tabs button{background:none;border:0;padding:8px 14px;font-size:15px;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted)}
+.tabs button.on{color:var(--ink);border-color:var(--acc);font-weight:600}
+.spacer{flex:1}
+#saveState{font-size:12px;color:var(--muted)}
+main{padding:16px 20px;max-width:1400px;margin:0 auto}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+input,select,textarea{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
+textarea{resize:vertical;min-height:70px;width:100%}
+button.b{font:inherit;padding:7px 14px;border-radius:6px;border:1px solid var(--line);background:#fff;cursor:pointer}
+button.b:hover{background:#f0f2f5}
+button.p{background:var(--acc);border-color:var(--acc);color:#fff}
+button.p:hover{background:var(--acc2)}
+button.d{color:var(--red)}
+.sum{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.sum div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 14px}
+.sum b{display:block;font-size:17px}
+.sum span{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:#fafbfc;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);cursor:pointer;user-select:none;white-space:nowrap}
+tr.row:hover td{background:#f7f9ff;cursor:pointer}
+td.num{text-align:right;white-space:nowrap}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.s0{background:#eef0f3;color:#4b5563}.s1{background:#dbeafe;color:#1e40af}.s2{background:#dcfce7;color:#166534}.s3{background:#e5e7eb;color:#374151}
+.p0{background:#fee2e2;color:#991b1b}.p1{background:#fef3c7;color:#92400e}.p2{background:#dcfce7;color:#166534}
+.late{color:var(--red);font-weight:600}.soon{color:var(--amber);font-weight:600}
+.prog{width:80px;height:7px;background:#e5e7eb;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px}
+.prog i{display:block;height:100%;background:var(--acc)}
+.note{color:var(--muted);font-size:12px;max-width:260px;white-space:pre-wrap;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.empty{padding:30px;text-align:center;color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:8px}
+dialog{border:0;border-radius:10px;padding:0;width:min(620px,95vw);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(20,25,35,.45)}
+.dh{padding:14px 18px;border-bottom:1px solid var(--line);font-weight:600;font-size:16px}
+.db{padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.db label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.db .full{grid-column:1/-1}
+.df{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px}
+.inline{display:flex;gap:6px}
+.inline select{flex:1}
+#newCli{display:none;gap:6px;margin-top:6px}
+#newCli.on{display:flex}
+#newCli input{flex:1}
+.hint{font-size:12px;color:var(--muted)}
+.banner{background:#fff7e6;border:1px solid #f5d38a;padding:10px 14px;border-radius:8px;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+:root{--acc:#7b68ee;--acc2:#6a57e0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fff}
+.seg button{border:0;background:none;padding:7px 12px;font:inherit;cursor:pointer;color:var(--muted)}
+.seg button.on{background:#efedfd;color:var(--acc);font-weight:600}
+.grp{margin-bottom:18px}
+.grph{display:flex;align-items:center;gap:8px;padding:6px 2px;cursor:pointer;user-select:none}
+.gtag{color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:4px;letter-spacing:.04em}
+.cnt{color:var(--muted);font-size:12px;font-weight:600}
+.caret{color:var(--muted);transition:transform .15s;display:inline-block}
+.grp.closed .caret{transform:rotate(-90deg)}
+.grp.closed table{display:none}
+.board{display:grid;grid-template-columns:repeat(4,minmax(230px,1fr));gap:12px;overflow-x:auto;align-items:start}
+.col{background:#eceef2;border-radius:10px;padding:8px;min-height:120px}
+.col.over{outline:2px dashed var(--acc)}
+.colh{display:flex;align-items:center;gap:8px;font-weight:600;padding:4px 4px 10px}
+.dot{width:10px;height:10px;border-radius:50%}
+.card{background:#fff;border-radius:8px;padding:10px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.08);cursor:pointer}
+.card:hover{box-shadow:0 3px 10px rgba(0,0,0,.12)}
+.ct{font-weight:600;margin-bottom:3px}
+.cm{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:7px;font-size:12px}
+.addc{width:100%;border:0;background:none;color:var(--muted);padding:6px;text-align:left;cursor:pointer;font:inherit;border-radius:6px}
+.addc:hover{background:#e2e5ea;color:var(--ink)}
+[hidden]{display:none!important}
+.grp table{table-layout:fixed}
+.grp th:nth-child(1){width:21%}.grp th:nth-child(2){width:13%}.grp th:nth-child(3){width:10%}.grp th:nth-child(4){width:13%}.grp th:nth-child(5){width:9%}.grp th:nth-child(6){width:11%}.grp th:nth-child(7){width:12%}
+#login{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.lbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:28px;width:min(420px,100%);box-shadow:0 10px 40px rgba(0,0,0,.08);text-align:center}
+.lbox h2{margin:0 0 4px}.lbox p{color:var(--muted);margin:0 0 18px}
+.ulist{display:flex;flex-direction:column;gap:10px}
+.ubtn{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit;font-size:16px;cursor:pointer;text-align:left}
+.ubtn:hover{border-color:var(--acc);background:#f7f6ff}.ubtn.last{border-color:var(--acc)}
+.av{width:36px;height:36px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.av.sm{width:24px;height:24px;font-size:12px}
+#userChip{display:flex;align-items:center;gap:8px}
+.ro .df #btnSaveJob,.ro .df #btnDelJob{display:none}
+.owner{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);font-weight:400}
+@media (max-width:700px){.db{grid-template-columns:1fr}}
+.netto{display:block;font-size:12px;color:#16a34a;margin-top:3px;cursor:pointer}.netto i{color:var(--muted);font-style:normal}
+.acli{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:10px}
+.acli>summary,.ayr>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;padding:10px 14px}
+.acli>summary::-webkit-details-marker,.ayr>summary::-webkit-details-marker{display:none}
+.acli>summary::before,.ayr>summary::before{content:"▸";color:var(--muted);transition:transform .15s}
+.acli[open]>summary::before,.ayr[open]>summary::before{transform:rotate(90deg)}
+.acli>summary b{font-size:15px}.atot{margin-left:auto;text-align:right;font-weight:600}.atot small{display:block;font-weight:400;font-size:11px;color:#16a34a}
+.ayr{margin:0 14px 10px 30px;border-left:3px solid var(--acc);background:var(--bg,#f7f7fb);border-radius:6px}
+.ayr>summary{padding:7px 12px}.ayr table{margin:0 0 6px}
+.ayr th:nth-child(1){width:40%}
+#btnCloud.ok{color:var(--green)}#btnCloud.ko{color:var(--red)}
+
+/* ===== Telefono e Fold (fino a 900px) ===== */
+#btnMore{display:none}
+@media (max-width:900px){
+  body{font-size:15px;-webkit-tap-highlight-color:transparent}
+  header{padding:8px 12px calc(8px) 12px;gap:8px;padding-top:max(8px,env(safe-area-inset-top))}
+  h1{font-size:17px;margin:0}
+  #saveState{display:none}
+  header .b{padding:8px 10px}
+  #btnMore{display:inline-block}
+  #btnFile,#btnExport,#btnImport{display:none}
+  header.more #btnExport,header.more #btnImport{display:inline-block;flex:1}
+  header.more #btnFile{display:inline-block;flex:1 1 100%}
+  #userChip{padding:4px;min-width:44px;justify-content:center;font-size:0}#userChip .av{font-size:12px}
+  #btnCloud{font-size:13px;padding:6px 10px;white-space:nowrap}
+  header .spacer{flex:1 1 0}
+  header{flex-wrap:nowrap}header.more{flex-wrap:wrap}
+  h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto;font-size:16px}
+  #btnCloud{max-width:46vw;overflow:hidden;text-overflow:ellipsis;flex:none}#userChip,#btnMore{flex:none}
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 12px rgba(0,0,0,.05)}
+  .tabs button{flex:1;padding:8px 2px 9px;font-size:12px;border-bottom:0;border-top:3px solid transparent;display:flex;flex-direction:column;align-items:center;gap:2px}
+  .tabs button::before{font-size:20px;line-height:1}
+  .tabs button[data-tab=lavori]::before{content:"📋"}.tabs button[data-tab=team]::before{content:"👥"}
+  .tabs button[data-tab=clienti]::before{content:"🏢"}.tabs button[data-tab=archivio]::before{content:"🗄️"}
+  .tabs button.on{border-top-color:var(--acc);border-bottom:0;color:var(--acc)}
+  main{padding:12px 12px calc(86px + env(safe-area-inset-bottom))}
+  input,select,textarea,button.b{font-size:16px;min-height:42px}
+  .bar{gap:8px}
+  .bar #q,.bar #qc,.bar #qa,.bar #qn{flex:1 1 100%;min-width:0!important;order:-1}
+  .bar select{flex:1 1 calc(50% - 4px);min-width:0}
+  .bar .hint{flex:1 1 100%}
+  #viewSw{flex:1 1 100%}#viewSw button{flex:1;min-height:40px}
+  #btnNewJob,#btnNewCli,#btnNewNote{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:21;border-radius:28px;padding:14px 20px;box-shadow:0 6px 18px rgba(123,104,238,.45);font-weight:600}
+  .sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .sum div{padding:8px 10px;min-width:0}.sum b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sum span{font-size:11px}.netto{font-size:11px}
+  /* lista come schede */
+  .mgrp{margin-bottom:16px}
+  .mgrid{display:grid;grid-template-columns:1fr;gap:8px}
+  .mgrid .card{margin:0;padding:12px;border-left:4px solid var(--c,#ccc)}
+  .grp.closed .mgrid{display:none}
+  /* bacheca: colonne che scorrono di lato */
+  .board{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:86vw;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+  .col{scroll-snap-align:start}
+  /* clienti e archivio: solo le colonne utili */
+  #clientsWrap th:nth-child(3),#clientsWrap td:nth-child(3),#clientsWrap th:nth-child(4),#clientsWrap td:nth-child(4),#clientsWrap th:nth-child(7),#clientsWrap td:nth-child(7){display:none}
+  .ayr{margin:0 8px 8px 12px}
+  .ayr th:nth-child(5),.ayr td:nth-child(5){display:none}
+  .ayr th,.ayr td{padding:7px 6px;font-size:13px}
+  .acli>summary{flex-wrap:wrap;padding:10px 12px}
+  #archWrap .hint{font-size:12px}
+  /* finestre a tutto schermo */
+  dialog{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;border-radius:0}
+  dialog[open]{display:flex;flex-direction:column}
+  dialog form{display:flex;flex-direction:column;height:100%}
+  .db{flex:1;overflow:auto;grid-template-columns:1fr;align-content:start}
+  .dh{padding-top:max(14px,env(safe-area-inset-top))}
+  .df{flex-wrap:wrap;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+  .df .b{flex:1}
+  #dCloud>div,#dFile>div{min-width:0!important;overflow:auto;flex:1}
+  .lbox{padding:22px}
+  #login{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+}
+/* Fold aperto (schermo largo quasi quadrato): due colonne, schede a lato */
+@media (min-width:600px) and (max-width:900px){
+  .mgrid{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .board{grid-auto-columns:calc(50% - 6px)}
+  dialog{width:min(640px,72vw);height:100dvh;margin:0 0 0 auto;border-radius:16px 0 0 16px;box-shadow:-10px 0 40px rgba(0,0,0,.25)}
+  .db{grid-template-columns:1fr 1fr}
+  #clientsWrap th:nth-child(4),#clientsWrap td:nth-child(4){display:table-cell}
+}
+
+/* ----- Appunti ----- */
+.nlist{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.ncard{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:8px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.ncard:hover{box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.ncard.done{opacity:.55}.ncard.done .ntxt{text-decoration:line-through}
+.ncard.nlate{border-left-color:var(--red)}.ncard.ntoday{border-left-color:var(--amber)}
+.ncard .ck{width:22px;height:22px;min-height:0;flex:none;margin:1px 0 0;accent-color:var(--acc)}
+.nbody{flex:1;min-width:0}
+.ndate{font-size:12px;font-weight:600;color:var(--muted)}.nlate .ndate{color:var(--red)}.ntoday .ndate{color:var(--amber)}
+.ntxt{white-space:pre-wrap;margin:3px 0 6px;word-break:break-word}
+.nchips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{font-size:12px;background:#f0f2f5;border-radius:999px;padding:2px 9px;color:#374151}.chip.sh{background:#efedfd;color:var(--acc)}
+.chip.lk{cursor:pointer}.chip.lk:hover{background:#e2e5ea}
+.nh{font-weight:700;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:16px 2px 8px}
+.nh:first-child{margin-top:4px}
+.chk{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;color:var(--ink)!important;font-size:14px!important}
+.chk input{width:20px;height:20px;min-height:0}
+@media (max-width:900px){.tabs button[data-tab=appunti]::before{content:"📝"}}
+</style>
+</head>
+<body>
+<header>
+  <h1>📋 Gestione Lavori</h1>
+  <div class="tabs"><button data-tab="lavori" class="on">I miei lavori</button><button data-tab="appunti">Appunti</button><button data-tab="team">Team</button><button data-tab="clienti">Clienti</button><button data-tab="archivio">Archivio</button></div>
+  <div class="spacer"></div>
+  <span id="saveState"></span>
+  <button class="b" id="btnCloud" title="Archivio online condiviso">☁ Online</button>
+  <button class="b" id="userChip" title="Cambia utente"></button>
+  <button class="b" id="btnMore" title="Altre funzioni">⋯</button>
+  <button class="b" id="btnFile" title="Salva i dati in un file sul computer">💾 Collega file archivio</button>
+  <button class="b" id="btnExport" title="Scarica una copia di sicurezza">⬇ Backup</button>
+  <button class="b" id="btnImport" title="Ripristina da una copia di sicurezza">⬆ Ripristina</button>
+  <input type="file" id="fileImport" accept=".json" hidden>
+</header>
+
+<div id="login" hidden><div class="lbox"><h2>📋 Gestione Lavori</h2><p>Chi sei?</p><div class="ulist" id="ulist"></div>
+  <div style="margin-top:14px" class="inline"><input id="newUser" placeholder="Nuovo utente…" style="flex:1"><button class="b" id="btnNewUser">Aggiungi</button></div></div></div>
+<main>
+  <div id="reconnect" class="banner" hidden>
+    <span>Per continuare a salvare nel file <b id="fileName"></b> clicca qui:</span>
+    <button class="b p" id="btnReconnect">Riapri archivio</button>
+  </div>
+
+  <section id="tab-lavori">
+    <div class="sum" id="summary"></div>
+    <div class="bar">
+      <select id="fUser" hidden title="Di chi vuoi vedere i lavori"></select>
+      <div class="seg" id="viewSw"><button data-v="list">☰ Lista</button><button data-v="board">▦ Bacheca</button></div>
+      <button class="b p" id="btnNewJob">+ Nuovo lavoro</button>
+      <input id="q" placeholder="Cerca…" style="min-width:200px">
+      <select id="fCli"><option value="">Tutti i clienti</option></select>
+      <select id="fStato"><option value="">Tutti gli stati</option><option value="attivi">Solo non consegnati</option></select>
+      <select id="fPag"><option value="">Tutti i pagamenti</option><option value="aperti">Da incassare</option></select>
+    </div>
+    <div id="jobsWrap"></div>
+  </section>
+
+  <section id="tab-appunti" hidden>
+    <div class="bar">
+      <button class="b p" id="btnNewNote">+ Nuovo appunto</button>
+      <input id="qn" placeholder="Cerca negli appunti…" style="min-width:200px">
+      <select id="fNote"><option value="tutti">Miei e condivisi</option><option value="miei">Solo i miei</option><option value="team">Condivisi dal team</option></select>
+      <label class="hint chk"><input type="checkbox" id="fNoteDone"> Mostra fatti</label>
+    </div>
+    <div id="notesWrap"></div>
+  </section>
+
+  <section id="tab-clienti" hidden>
+    <div class="bar">
+      <button class="b p" id="btnNewCli">+ Nuovo cliente</button>
+      <input id="qc" placeholder="Cerca cliente…" style="min-width:200px">
+    </div>
+    <div id="clientsWrap"></div>
+  </section>
+
+  <section id="tab-archivio" hidden>
+    <div class="bar">
+      <select id="aUser" title="Di chi vuoi vedere l'archivio"></select>
+      <input id="qa" placeholder="Cerca nell'archivio…" style="min-width:220px">
+      <button class="b" id="aOpenAll">Apri tutto</button><button class="b" id="aCloseAll">Chiudi tutto</button>
+      <span class="hint">Qui finiscono da soli i lavori <b>Consegnati</b> e <b>Pagati</b>. Anno = data del pagamento (≈ se manca: data di consegna).</span>
+    </div>
+    <div id="archWrap"></div>
+  </section>
+</main>
+
+<dialog id="dNote">
+  <form method="dialog" id="formNote">
+    <div class="dh" id="dNoteTitle">Appunto</div>
+    <div class="db">
+      <label>Data<input type="date" id="nData"></label>
+      <label>Ora (facoltativa)<input type="time" id="nOra"></label>
+      <label class="full">Appunto<textarea id="nTesto" required style="min-height:120px" placeholder="Scrivi qui…"></textarea></label>
+      <label>Cliente (facoltativo)<select id="nCli"></select></label>
+      <label>Lavoro (facoltativo)<select id="nJob"></select></label>
+      <label class="full chk"><input type="checkbox" id="nShare"> 👥 Condividi con il team</label>
+      <label class="full chk"><input type="checkbox" id="nDone"> ✔ Fatto</label>
+    </div>
+    <div class="df"><button type="button" class="b d" id="btnDelNote">Elimina</button><div class="spacer"></div>
+      <button type="button" class="b" onclick="this.closest('dialog').close()">Annulla</button><button class="b p" id="btnSaveNote">Salva</button></div>
+  </form>
+</dialog>
+
+<dialog id="dJob">
+  <form method="dialog" id="formJob">
+    <div class="dh" id="dJobTitle">Lavoro</div>
+    <div class="db">
+      <label class="full">Cliente
+        <div class="inline"><select id="jCli" required></select><button type="button" class="b" id="btnAddCliInline">+ Nuovo</button></div>
+        <div id="newCli"><input id="newCliName" placeholder="Nome del nuovo cliente"><button type="button" class="b p" id="btnSaveCliInline">Aggiungi</button></div>
+      </label>
+      <label class="full">Descrizione del lavoro<input id="jDesc" required></label>
+      <label>Data di consegna<input type="date" id="jDue"></label>
+      <label>Stato<select id="jStato"></select></label>
+      <label class="full">Avanzamento: <span id="jProgVal">0%</span><input type="range" id="jProg" min="0" max="100" step="5" value="0"></label>
+      <label>Importo totale (€)<input type="number" id="jImp" min="0" step="0.01"></label>
+      <label>Già incassato (€)<input type="number" id="jPaid" min="0" step="0.01"></label>
+      <label>Modalità di pagamento<select id="jTerm"></select></label>
+      <label>N° fattura<input id="jNum" placeholder="es. 12/2026"></label>
+      <label>Data fattura<input type="date" id="jInv"></label>
+      <label>Scadenza pagamento<input type="date" id="jScad"><span class="hint" id="jScadHint"></span></label>
+      <label>Pagato il<input type="date" id="jPayDate"></label>
+      <label>Stato pagamento<input id="jPagLabel" disabled></label>
+      <label class="full">Note<textarea id="jNote"></textarea></label>
+    </div>
+    <div class="df">
+      <button type="button" class="b" id="btnJobNote" title="Nuovo appunto collegato a questo lavoro">📝 Appunto</button><button type="button" class="b d" id="btnDelJob">Elimina</button>
+      <div class="spacer"></div>
+      <button type="button" class="b" value="cancel" onclick="this.closest('dialog').close()">Annulla</button>
+      <button class="b p" id="btnSaveJob">Salva</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dCloud">
+  <div class="dh">Archivio online</div>
+  <div style="padding:16px 18px;line-height:1.5;display:grid;gap:10px;min-width:420px">
+    <div class="hint">I dati si sincronizzano ogni 15 secondi con l'archivio online condiviso. Il file sul computer resta come copia di riserva e per lavorare senza internet.</div>
+    <label>Indirizzo del progetto (Project URL)<input id="cUrl" placeholder="https://xxxx.supabase.co" style="width:100%"></label>
+    <label>Chiave pubblica (anon / publishable key)<input id="cKey" style="width:100%"></label>
+    <label>Codice del team<input id="cCode" style="width:100%"></label>
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="cOff"> Spegni l'archivio online su questo computer</label>
+  </div>
+  <div class="df"><button type="button" class="b" onclick="this.closest('dialog').close()">Annulla</button><button type="button" class="b" id="btnCloudReset">Valori predefiniti</button><div class="spacer"></div>
+  <button type="button" class="b p" id="btnCloudSave">Salva</button></div>
+</dialog>
+
+<dialog id="dFile">
+  <div class="dh">Collega file archivio</div>
+  <div style="padding:16px 18px;line-height:1.5">Scegli <b>Apri archivio esistente</b> se il file <i>archivio-lavori.json</i> c'è già (per esempio nella cartella Calendario condivisa).<br>
+  Scegli <b>Crea nuovo archivio</b> per salvare in un nuovo file i dati che vedi ora.</div>
+  <div class="df"><button type="button" class="b" onclick="this.closest('dialog').close()">Annulla</button><div class="spacer"></div>
+  <button type="button" class="b" id="btnFileNew">Crea nuovo archivio</button><button type="button" class="b p" id="btnFileOpen">Apri archivio esistente</button></div>
+</dialog>
+
+<dialog id="dCli">
+  <form method="dialog" id="formCli">
+    <div class="dh" id="dCliTitle">Cliente</div>
+    <div class="db">
+      <label class="full">Nome / Ragione sociale<input id="cNome" required></label>
+      <label>Telefono<input id="cTel"></label>
+      <label>Email<input id="cMail" type="email"></label>
+      <label class="full">Indirizzo / P.IVA<input id="cAddr"></label>
+      <label class="full">Note<textarea id="cNote"></textarea></label>
+    </div>
+    <div class="df">
+      <button type="button" class="b d" id="btnDelCli">Elimina</button>
+      <div class="spacer"></div>
+      <button type="button" class="b" onclick="this.closest('dialog').close()">Annulla</button>
+      <button class="b p">Salva</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const STATI=["Da iniziare","In corso","Completato","Consegnato"];
+const LS="gestione-lavori-v1";
+let db={clienti:[],lavori:[]};
+const COL=["#87909e","#3b82f6","#22c55e","#7c3aed"];
+let fileHandle=null, sortKey="due", sortDir=1, editJob=null, editCli=null, collapsed={};
+let TAX=31;try{const t=localStorage.getItem(LS+"-tasse");if(t!==null&&!isNaN(+t))TAX=+t}catch(e){}
+let view="list";try{view=localStorage.getItem(LS+"-view")||"list"}catch(e){}
+const $=s=>document.querySelector(s);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const eur=n=>(Number(n)||0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtD=d=>d?new Date(d+"T00:00").toLocaleDateString("it-IT"):"";
+const today=()=>new Date().toISOString().slice(0,10);
+function pagStato(j){const imp=+j.importo||0,p=+j.incassato||0;if(imp>0&&p>=imp)return 2;if(p>0)return 1;return imp>0?0:-1}
+const PAG=["Non pagato","Acconto","Pagato"];
+// modalità di pagamento: giorni e se "fine mese" (FM). base: fattura (DF) o consegna
+const TERMS=[["","— nessuna —"],["Anticipato",0],["Rimessa diretta",0],["Alla consegna",0],["Bonifico vista fattura",0],
+  ["30 gg DF",30],["30 gg DF FM",30,1],["60 gg DF",60],["60 gg DF FM",60,1],["90 gg DF",90],["90 gg DF FM",90,1],["120 gg DF FM",120,1],
+  ["Ri.Ba. 30 gg DF FM",30,1],["Ri.Ba. 60 gg DF FM",60,1],["Ri.Ba. 30/60 gg DF FM",60,1],["Acconto + saldo alla consegna",0],["Altro",null]];
+function calcScad(term,base){
+  const t=TERMS.find(x=>x[0]===term);if(!t||!t[0]||t[1]==null||!base)return "";
+  const d=new Date(base+"T12:00");d.setDate(d.getDate()+t[1]);
+  if(t[2])d.setMonth(d.getMonth()+1,0);
+  return d.toISOString().slice(0,10);
+}
+const scadOf=j=>j.scadenza||calcScad(j.modalita,j.dataFattura||j.consegna);
+let me=null,tab="lavori";
+const utOf=j=>j.utente||"u-jacopo";
+const userName=id=>(db.utenti.find(u=>u.id===id)||{}).nome||"?";
+const UCOL=["#7b68ee","#e5487d","#0ea5e9","#f59e0b","#10b981","#ef4444"];
+const avatar=(id,sm)=>{const i=Math.max(0,db.utenti.findIndex(u=>u.id===id));return `<span class="av${sm?" sm":""}" style="background:${UCOL[i%UCOL.length]}">${esc(userName(id)[0]||"?")}</span>`};
+const cliName=id=>(db.clienti.find(c=>c.id===id)||{}).nome||"—";
+
+/* ---------- Salvataggio ---------- */
+const DEF_USERS=[{id:"u-jacopo",nome:"Jacopo",mod:0},{id:"u-stefania",nome:"Stefania",mod:0}];
+function norm(d){d.clienti??=[];d.lavori??=[];d.eliminati??={};d.utenti??=[];d.appunti??=[];
+  DEF_USERS.forEach(u=>{if(!d.utenti.some(x=>x.id===u.id)&&!d.eliminati[u.id])d.utenti.push({...u})});return d}
+function load(){try{const r=localStorage.getItem(LS);if(r)db=JSON.parse(r)}catch(e){} norm(db)}
+// unisce due versioni dei dati: per ogni scheda vince la modifica più recente
+function merge(a,b){a=norm(a);b=norm(b);const del={...a.eliminati};
+  for(const[k,v]of Object.entries(b.eliminati))del[k]=Math.max(del[k]||0,v);
+  const out={eliminati:del};
+  for(const kind of["clienti","lavori","utenti","appunti"]){const m=new Map();
+    for(const r of[...a[kind],...b[kind]]){const o=m.get(r.id);if(!o||(r.mod||0)>(o.mod||0))m.set(r.id,r)}
+    out[kind]=[...m.values()].filter(r=>!(del[r.id]>=(r.mod||0)))}
+  return norm(out)}
+const touch=r=>{r.mod=Date.now();return r};
+const markDel=id=>{db.eliminati[id]=Date.now()};
+let lastMod=0;
+let saveTimer;
+function save(){
+  try{localStorage.setItem(LS,JSON.stringify(db))}catch(e){}
+  clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{await writeFile();cloudSync()},300);
+  setState(fileHandle?"Salvataggio…":"Salvato nel browser");
+}
+async function writeFile(){
+  if(!fileHandle)return;
+  try{
+    try{const f=await fileHandle.getFile();const t=await f.text();if(t.trim())db=merge(db,JSON.parse(t))}catch(e){}
+    const w=await fileHandle.createWritable();await w.write(JSON.stringify(db,null,2));await w.close();
+    lastMod=(await fileHandle.getFile()).lastModified;
+    try{localStorage.setItem(LS,JSON.stringify(db))}catch(e){}
+    setState("✔ Salvato in "+fileHandle.name+" alle "+new Date().toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"}))}
+  catch(e){setState("⚠ Non salvato nel file");showReconnect()}
+}
+function setState(t){$("#saveState").textContent=t}
+// conserva il collegamento al file tra una sessione e l'altra
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open("gestione-lavori",1);r.onupgradeneeded=()=>r.result.createObjectStore("k");r.onsuccess=()=>res(r.result);r.onerror=rej})}
+async function idbSet(v){try{const d=await idb();d.transaction("k","readwrite").objectStore("k").put(v,"file")}catch(e){}}
+async function idbGet(){try{const d=await idb();return await new Promise(r=>{const q=d.transaction("k").objectStore("k").get("file");q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)})}catch(e){return null}}
+async function readFromHandle(h){const f=await h.getFile();lastMod=f.lastModified;const t=await f.text();if(t.trim()){const d=JSON.parse(t);if(d.clienti&&d.lavori){db=merge(db,d);try{localStorage.setItem(LS,JSON.stringify(db))}catch(e){}}}}
+// ogni 15 secondi controlla se qualcun altro ha modificato l'archivio
+setInterval(async()=>{
+  if(!fileHandle||!$("#reconnect").hidden)return;
+  try{if(await fileHandle.queryPermission({mode:"readwrite"})!=="granted")return;
+    const f=await fileHandle.getFile();if(f.lastModified!==lastMod){await readFromHandle(fileHandle);render();setState("↻ Aggiornato alle "+new Date().toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"}))}}catch(e){}
+},15000);
+$("#btnFile").onclick=async()=>{
+  if(!window.showSaveFilePicker){alert("Questo browser non permette di collegare un file. Usa Microsoft Edge o Google Chrome, oppure usa il pulsante Backup.");return}
+  $("#dFile").showModal();
+};
+// ogni pulsante è un clic nuovo: Chrome apre la finestra dei file solo subito dopo un clic
+$("#btnFileOpen").onclick=()=>linkFile(true);
+$("#btnFileNew").onclick=()=>linkFile(false);
+async function linkFile(scelta){
+  $("#dFile").close();
+  try{
+    if(scelta){[fileHandle]=await showOpenFilePicker({types:[{description:"Archivio lavori",accept:{"application/json":[".json"]}}]});
+      await fileHandle.requestPermission({mode:"readwrite"});await readFromHandle(fileHandle)}
+    else{fileHandle=await showSaveFilePicker({suggestedName:"archivio-lavori.json",types:[{description:"Archivio lavori",accept:{"application/json":[".json"]}}]})}
+    await idbSet(fileHandle);$("#reconnect").hidden=true;save();render();
+  }catch(e){if(e.name!=="AbortError")alert("Non sono riuscito a collegare il file: "+e.message)}
+}
+function showReconnect(){if(!fileHandle)return;$("#fileName").textContent=fileHandle.name;$("#reconnect").hidden=false}
+$("#btnReconnect").onclick=async()=>{
+  try{if(await fileHandle.requestPermission({mode:"readwrite"})==="granted"){await readFromHandle(fileHandle);$("#reconnect").hidden=true;save();render()}}
+  catch(e){alert("Impossibile aprire il file: "+e.message)}
+};
+$("#btnExport").onclick=()=>{
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:"application/json"}));
+  a.download="backup-lavori-"+today()+".json";a.click();
+};
+$("#btnImport").onclick=()=>$("#fileImport").click();
+$("#fileImport").onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{const d=JSON.parse(await f.text());if(!d.clienti||!d.lavori)throw new Error("file non valido");
+    if(confirm("Sostituire i dati attuali con quelli del backup?")){const now=Date.now();
+      db.clienti.concat(db.lavori).forEach(r=>{if(!d.clienti.concat(d.lavori).some(x=>x.id===r.id))db.eliminati[r.id]=now});
+      norm(d);d.clienti.concat(d.lavori).forEach(r=>r.mod=now+1);d.eliminati=db.eliminati;db=d;save();render()}}
+  catch(err){alert("Impossibile leggere il backup: "+err.message)}
+  e.target.value="";
+};
+
+/* ---------- Schede ---------- */
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  tab=b.dataset.tab;$("#tab-lavori").hidden=tab==="clienti"||tab==="archivio"||tab==="appunti";$("#tab-appunti").hidden=tab!=="appunti";$("#tab-clienti").hidden=tab!=="clienti";$("#tab-archivio").hidden=tab!=="archivio";
+  $("#fUser").hidden=tab!=="team";$("#btnNewJob").hidden=tab==="team";render();
+});
+
+/* ---------- Lavori ---------- */
+STATI.forEach((s,i)=>{$("#jStato").add(new Option(s,i));$("#fStato").add(new Option(s,i))});
+PAG.forEach((s,i)=>$("#fPag").add(new Option(s,i)));
+function fillCliSelects(sel){
+  const sorted=[...db.clienti].sort((a,b)=>a.nome.localeCompare(b.nome));
+  const j=$("#jCli");j.innerHTML='<option value="">— scegli cliente —</option>';sorted.forEach(c=>j.add(new Option(c.nome,c.id)));if(sel)j.value=sel;
+  const f=$("#fCli"),v=f.value;f.innerHTML='<option value="">Tutti i clienti</option>';sorted.forEach(c=>f.add(new Option(c.nome,c.id)));f.value=v;
+}
+function renderJobs(){
+  const q=$("#q").value.toLowerCase(),fc=$("#fCli").value,fs=$("#fStato").value,fp=$("#fPag").value;
+  const team=tab==="team",scope=team?$("#fUser").value:me;
+  const base=db.lavori.filter(j=>(!scope||utOf(j)===scope)&&!isArch(j));
+  let list=base.filter(j=>{
+    if(fc&&j.cliente!==fc)return false;
+    if(fs==="attivi"?j.stato==3:(fs!==""&&j.stato!=fs))return false;
+    const ps=pagStato(j);if(fp==="aperti"?(ps===2||ps===-1):(fp!==""&&ps!=fp))return false;
+    if(q&&!(j.descrizione+" "+cliName(j.cliente)+" "+(j.note||"")+" "+(j.numFattura||"")).toLowerCase().includes(q))return false;
+    return true});
+  const val={cliente:j=>cliName(j.cliente).toLowerCase(),descrizione:j=>j.descrizione.toLowerCase(),due:j=>j.consegna||"9999",stato:j=>+j.stato,prog:j=>+j.avanzamento,imp:j=>+j.importo||0,pag:j=>pagStato(j),scad:j=>pagStato(j)===2?"9999":(scadOf(j)||"9998")};
+  list.sort((a,b)=>{const x=val[sortKey](a),y=val[sortKey](b);return (x>y?1:x<y?-1:0)*sortDir});
+  // riepilogo
+  const att=base.filter(j=>j.stato!=3),t=today();
+  const late=att.filter(j=>j.consegna&&j.consegna<t).length;
+  const daInc=base.reduce((s,j)=>s+Math.max(0,(+j.importo||0)-(+j.incassato||0)),0);
+  $("#summary").innerHTML=`<div><b>${att.length}</b><span>Lavori da consegnare</span></div><div><b style="color:${late?'var(--red)':''}">${late}</b><span>In ritardo</span></div><div><b>${eur(daInc)}</b><span>Da incassare</span><small class="netto" id="netto" title="Clic per cambiare la percentuale di tasse">Netto ≈ ${eur(daInc*(1-TAX/100))} <i>(−${TAX}% tasse)</i></small></div>`;
+  $("#netto").onclick=()=>{const v=prompt("Percentuale di tasse da togliere per il netto:",TAX);if(v===null)return;const n=parseFloat(String(v).replace(",","."));
+    if(isNaN(n)||n<0||n>100){alert("Scrivi un numero tra 0 e 100");return}TAX=n;try{localStorage.setItem(LS+"-tasse",n)}catch(e){}renderJobs()};
+  if(!base.length){$("#jobsWrap").innerHTML=team?'<div class="empty">Nessun lavoro da mostrare.</div>':'<div class="empty">Nessun lavoro ancora. Clicca <b>+ Nuovo lavoro</b> per iniziare.</div>';return}
+  const own=j=>team&&!scope?`<div class="owner">${avatar(utOf(j),1)} ${esc(userName(utOf(j)))}</div>`:"";
+  if(!list.length){$("#jobsWrap").innerHTML='<div class="empty">Nessun lavoro corrisponde ai filtri.</div>';return}
+  const arrow=k=>sortKey===k?(sortDir>0?" ▲":" ▼"):"";
+  const in7=new Date(Date.now()+7*864e5).toISOString().slice(0,10);
+  const dueCls=j=>j.stato!=3&&j.consegna?(j.consegna<t?"late":j.consegna<=in7?"soon":""):"";
+  const payDateHtml=j=>{const ps=pagStato(j);
+    if(ps===2)return j.dataPagamento?`<span style="color:var(--green)">✔ ${fmtD(j.dataPagamento)}</span>`:"";
+    const sc=scadOf(j);if(!sc)return j.modalita?`<span class="hint">${esc(j.modalita)}</span>`:"";
+    const c=sc<t?"late":sc<=in7?"soon":"";
+    return `<span class="${c}">${fmtD(sc)}${c==="late"?" ⚠":""}</span>${j.modalita?`<div class="hint">${esc(j.modalita)}</div>`:""}`};
+  const pagHtml=j=>{const ps=pagStato(j);return ps>=0?`<span class="pill p${ps}">${PAG[ps]}</span>${ps===1?`<div class="hint">${eur(j.incassato)} ricevuti</div>`:""}`:""};
+  const groups=STATI.map((s,i)=>({i,s,items:list.filter(j=>j.stato==i)})).filter(g=>g.items.length||view==="board");
+  if(view==="board"){
+    $("#jobsWrap").innerHTML=`<div class="board">${groups.map(g=>`<div class="col" data-st="${g.i}">
+      <div class="colh"><span class="dot" style="background:${COL[g.i]}"></span>${g.s}<span class="cnt">${g.items.length}</span></div>
+      ${g.items.map(j=>{const dc=dueCls(j);return `<div class="card" draggable="${!team}" data-id="${j.id}">
+        <div class="ct">${esc(j.descrizione)}</div>${own(j)}<div class="hint">${esc(cliName(j.cliente))}</div>
+        <div class="cm">${j.consegna?`<span class="${dc}">📅 ${fmtD(j.consegna)}</span>`:""}${j.importo?`<span>${eur(j.importo)}</span>`:""}</div>
+        ${pagStato(j)>=0&&(scadOf(j)||j.dataPagamento)?`<div class="cm"><span class="hint">💶 ${pagStato(j)===2?"Pagato":"Scadenza"}</span><span>${payDateHtml(j)}</span></div>`:""}
+        <div class="cm"><span><span class="prog"><i style="width:${+j.avanzamento||0}%"></i></span>${+j.avanzamento||0}%</span>${pagHtml(j)}</div></div>`}).join("")}
+      ${team?"":`<button class="addc" data-st="${g.i}">+ Aggiungi lavoro</button>`}</div>`).join("")}</div>`;
+    const w=$("#jobsWrap");
+    w.querySelectorAll(".card").forEach(c=>{c.onclick=()=>openJob(db.lavori.find(j=>j.id===c.dataset.id));c.ondragstart=e=>e.dataTransfer.setData("text",c.dataset.id)});
+    if(!team)w.querySelectorAll(".col").forEach(col=>{col.ondragover=e=>{e.preventDefault();col.classList.add("over")};col.ondragleave=()=>col.classList.remove("over");
+      col.ondrop=e=>{e.preventDefault();const j=db.lavori.find(x=>x.id===e.dataTransfer.getData("text"));if(j){j.stato=+col.dataset.st;if(j.stato>=2)j.avanzamento=100;touch(j);save();renderJobs()}}});
+    w.querySelectorAll(".addc").forEach(b=>b.onclick=()=>{openJob();$("#jStato").value=b.dataset.st});
+    return;
+  }
+  if(isNarrow()){
+    $("#jobsWrap").innerHTML=groups.map(g=>`<div class="grp mgrp${collapsed[g.i]?" closed":""}">
+      <div class="grph" data-st="${g.i}"><span class="caret">▾</span><span class="gtag" style="background:${COL[g.i]}">${g.s.toUpperCase()}</span><span class="cnt">${g.items.length}</span></div>
+      <div class="mgrid">${g.items.map(j=>{const dc=dueCls(j);return `<div class="card" style="--c:${COL[g.i]}" data-id="${j.id}">
+        <div class="ct">${esc(j.descrizione)}</div>${own(j)}<div class="hint">${esc(cliName(j.cliente))}</div>
+        <div class="cm">${j.consegna?`<span class="${dc}">📅 ${fmtD(j.consegna)}${dc==="late"?" ⚠":""}</span>`:"<span></span>"}${j.importo?`<b>${eur(j.importo)}${j.numFattura?` <span class="hint" style="font-weight:400">· Fatt. ${esc(j.numFattura)}</span>`:""}</b>`:""}</div>
+        ${pagStato(j)>=0&&(scadOf(j)||j.dataPagamento)?`<div class="cm"><span class="hint">💶 ${pagStato(j)===2?"Pagato":"Scadenza"}</span><span>${payDateHtml(j)}</span></div>`:""}
+        <div class="cm"><span><span class="prog"><i style="width:${+j.avanzamento||0}%"></i></span>${+j.avanzamento||0}%</span>${pagHtml(j)}</div>
+        ${j.note?`<div class="note" style="margin-top:6px">${esc(j.note)}</div>`:""}</div>`}).join("")}</div></div>`).join("");
+    $("#jobsWrap").querySelectorAll(".grph").forEach(h=>h.onclick=()=>{collapsed[h.dataset.st]=!collapsed[h.dataset.st];renderJobs()});
+    $("#jobsWrap").querySelectorAll(".card").forEach(c=>c.onclick=()=>openJob(db.lavori.find(j=>j.id===c.dataset.id)));
+    return;
+  }
+  const head=`<tr><th data-k="descrizione">Lavoro${arrow("descrizione")}</th><th data-k="cliente">Cliente${arrow("cliente")}</th><th data-k="due">Consegna${arrow("due")}</th>
+    <th data-k="prog">Avanzamento${arrow("prog")}</th><th data-k="imp" style="text-align:right">Importo${arrow("imp")}</th>
+    <th data-k="pag">Pagamento${arrow("pag")}</th><th data-k="scad">Data pagamento${arrow("scad")}</th><th>Note</th></tr>`;
+  $("#jobsWrap").innerHTML=groups.map(g=>`<div class="grp${collapsed[g.i]?" closed":""}">
+    <div class="grph" data-st="${g.i}"><span class="caret">▾</span><span class="gtag" style="background:${COL[g.i]}">${g.s.toUpperCase()}</span><span class="cnt">${g.items.length}</span></div>
+    <table><thead>${head}</thead><tbody>${g.items.map(j=>{const dc=dueCls(j);
+      return `<tr class="row" data-id="${j.id}" style="box-shadow:inset 3px 0 ${COL[g.i]}"><td><b>${esc(j.descrizione)}</b>${own(j)}</td><td>${esc(cliName(j.cliente))}</td>
+      <td class="${dc}">${fmtD(j.consegna)}${dc==="late"?" ⚠":""}</td>
+      <td><span class="prog"><i style="width:${+j.avanzamento||0}%"></i></span>${+j.avanzamento||0}%</td>
+      <td class="num">${j.importo?eur(j.importo):""}${j.numFattura?`<div class="hint">Fatt. ${esc(j.numFattura)}</div>`:""}</td><td>${pagHtml(j)}</td><td>${payDateHtml(j)}</td>
+      <td><div class="note">${esc(j.note)}</div></td></tr>`}).join("")}</tbody></table></div>`).join("");
+  $("#jobsWrap").querySelectorAll(".grph").forEach(h=>h.onclick=()=>{collapsed[h.dataset.st]=!collapsed[h.dataset.st];renderJobs()});
+  $("#jobsWrap").querySelectorAll("th[data-k]").forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortDir=sortKey===k?-sortDir:1;sortKey=k;renderJobs()});
+  $("#jobsWrap").querySelectorAll("tr.row").forEach(tr=>tr.onclick=()=>openJob(db.lavori.find(j=>j.id===tr.dataset.id)));
+}
+$("#viewSw").querySelectorAll("button").forEach(b=>b.onclick=()=>{view=b.dataset.v;try{localStorage.setItem(LS+"-view",view)}catch(e){}
+  $("#viewSw").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));renderJobs()});
+["#q","#fCli","#fStato","#fPag"].forEach(s=>$(s).addEventListener("input",renderJobs));
+
+TERMS.forEach(([n,_,fm],i)=>$("#jTerm").add(new Option(i?n:"— nessuna —",n)));
+function updScad(){const auto=calcScad($("#jTerm").value,$("#jInv").value||$("#jDue").value);
+  $("#jScad").placeholder=auto;if(!$("#jScad").dataset.manual)$("#jScad").value=auto;
+  $("#jScadHint").textContent=auto?($("#jInv").value?"calcolata dalla data fattura":"calcolata dalla data di consegna (manca la data fattura)"):"";}
+["#jTerm","#jInv","#jDue"].forEach(s=>$(s).addEventListener("input",updScad));
+$("#jScad").addEventListener("input",()=>{$("#jScad").dataset.manual=$("#jScad").value?"1":"";if(!$("#jScad").value)updScad()});
+$("#jPayDate").addEventListener("input",()=>{if($("#jPayDate").value&&$("#jPaid").value===""&&$("#jImp").value){$("#jPaid").value=$("#jImp").value;updPagLabel()}});
+function updPagLabel(){const ps=pagStato({importo:$("#jImp").value,incassato:$("#jPaid").value});$("#jPagLabel").value=ps<0?"—":PAG[ps]}
+$("#jImp").oninput=$("#jPaid").oninput=updPagLabel;
+$("#jProg").oninput=()=>$("#jProgVal").textContent=$("#jProg").value+"%";
+$("#jStato").onchange=()=>{if($("#jStato").value>=2&&+$("#jProg").value<100){$("#jProg").value=100;$("#jProgVal").textContent="100%"}};
+function openJob(j){
+  editJob=j||null;fillCliSelects(j?.cliente);
+  const ro=!!j&&utOf(j)!==me;
+  $("#dJob").classList.toggle("ro",ro);
+  $("#formJob").querySelectorAll(".db input,.db select,.db textarea,.db button").forEach(el=>el.disabled=ro);$("#jPagLabel").disabled=true;
+  $("#dJobTitle").innerHTML=ro?`Lavoro di ${esc(userName(utOf(j)))} <span class="hint">(solo consultazione)</span>`:j?"Modifica lavoro":"Nuovo lavoro";
+  $("#jDesc").value=j?.descrizione||"";$("#jDue").value=j?.consegna||"";$("#jStato").value=j?.stato??0;
+  $("#jProg").value=j?.avanzamento??0;$("#jProgVal").textContent=($("#jProg").value)+"%";
+  $("#jImp").value=j?.importo??"";$("#jPaid").value=j?.incassato??"";$("#jPayDate").value=j?.dataPagamento||"";
+  $("#jTerm").value=j?.modalita||"";$("#jInv").value=j?.dataFattura||"";$("#jNum").value=j?.numFattura||"";
+  $("#jScad").dataset.manual=j?.scadenza?"1":"";$("#jScad").value=j?.scadenza||"";updScad();$("#jNote").value=j?.note||"";
+  $("#btnDelJob").style.visibility=j?"visible":"hidden";$("#btnJobNote").style.display=j?"":"none";$("#newCli").classList.remove("on");updPagLabel();
+  $("#dJob").showModal();
+}
+$("#btnNewJob").onclick=()=>openJob();
+$("#formJob").onsubmit=e=>{
+  e.preventDefault();if(editJob&&utOf(editJob)!==me)return;
+  let j=editJob?db.lavori.find(x=>x.id===editJob.id):null;
+  if(!j){j=editJob||{id:uid(),creato:today(),utente:me};db.lavori.push(j)}
+  Object.assign(j,{cliente:$("#jCli").value,descrizione:$("#jDesc").value.trim(),consegna:$("#jDue").value,stato:+$("#jStato").value,
+    avanzamento:+$("#jProg").value,importo:$("#jImp").value===""?"":+$("#jImp").value,incassato:$("#jPaid").value===""?"":+$("#jPaid").value,
+    dataPagamento:$("#jPayDate").value,modalita:$("#jTerm").value,dataFattura:$("#jInv").value,numFattura:$("#jNum").value.trim(),
+    scadenza:$("#jScad").dataset.manual?$("#jScad").value:"",note:$("#jNote").value});
+  touch(j);delete db.eliminati[j.id];
+  save();$("#dJob").close();render();
+};
+$("#btnDelJob").onclick=()=>{if(editJob&&confirm("Eliminare questo lavoro?")){db.lavori=db.lavori.filter(x=>x.id!==editJob.id);markDel(editJob.id);save();$("#dJob").close();render()}};
+$("#btnAddCliInline").onclick=()=>{$("#newCli").classList.toggle("on");$("#newCliName").focus()};
+function addCliInline(){
+  const n=$("#newCliName").value.trim();if(!n)return;
+  let c=db.clienti.find(x=>x.nome.toLowerCase()===n.toLowerCase());
+  if(!c){c=touch({id:uid(),nome:n});db.clienti.push(c);save()}
+  fillCliSelects(c.id);$("#newCliName").value="";$("#newCli").classList.remove("on");
+}
+$("#btnSaveCliInline").onclick=addCliInline;
+$("#newCliName").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addCliInline()}};
+
+/* ---------- Archivio (lavori consegnati e pagati) ---------- */
+const isArch=j=>j.stato==3&&pagStato(j)===2;
+const archYear=j=>{const d=j.dataPagamento||j.consegna||j.creato||"";return{y:d?d.slice(0,4):"Senza data",approx:!j.dataPagamento}};
+let archOpen={};
+function renderArchive(){
+  const sel=$("#aUser"),cur=sel.value||sel.dataset.v||me||"";
+  sel.innerHTML='<option value="">Tutti</option>'+db.utenti.map(u=>`<option value="${u.id}">${esc(u.nome)}</option>`).join("");sel.value=cur;sel.dataset.v=cur;
+  const q=$("#qa").value.toLowerCase(),scope=sel.value;
+  const list=db.lavori.filter(j=>isArch(j)&&(!scope||utOf(j)===scope)&&(!q||(j.descrizione+" "+cliName(j.cliente)+" "+(j.note||"")+" "+(j.numFattura||"")).toLowerCase().includes(q)));
+  if(!list.length){$("#archWrap").innerHTML='<div class="empty">'+(q?'Nessun lavoro archiviato corrisponde alla ricerca.':'Archivio vuoto. I lavori arrivano qui quando sono <b>Consegnati</b> e <b>Pagati</b>.')+'</div>';return}
+  const tot=a=>a.reduce((s,j)=>s+(+j.importo||0),0);
+  const money=a=>{const t=tot(a);return `${eur(t)}<small>netto ≈ ${eur(t*(1-TAX/100))}</small>`};
+  const byCli=new Map();list.forEach(j=>{const k=j.cliente||"";if(!byCli.has(k))byCli.set(k,[]);byCli.get(k).push(j)});
+  const clis=[...byCli.entries()].sort((a,b)=>cliName(a[0]).localeCompare(cliName(b[0])));
+  const openAll=q!=="";
+  $("#archWrap").innerHTML=clis.map(([cid,js])=>{
+    const byY=new Map();js.forEach(j=>{const y=archYear(j).y;if(!byY.has(y))byY.set(y,[]);byY.get(y).push(j)});
+    const yrs=[...byY.entries()].sort((a,b)=>b[0].localeCompare(a[0]));
+    const ck="c"+cid;
+    return `<details class="acli" data-k="${ck}"${openAll||archOpen[ck]?" open":""}><summary><b>${esc(cliName(cid))}</b><span class="hint">${js.length} lavor${js.length===1?"o":"i"} · ${yrs.length} ann${yrs.length===1?"o":"i"}</span><span class="atot">${money(js)}</span></summary>
+    ${yrs.map(([y,ys])=>{const yk=ck+"-"+y;ys.sort((a,b)=>(archYear(b).y+(b.dataPagamento||b.consegna||"")).localeCompare(archYear(a).y+(a.dataPagamento||a.consegna||"")));
+      return `<details class="ayr" data-k="${yk}"${openAll||archOpen[yk]?" open":""}><summary><b>${esc(y)}</b><span class="hint">${ys.length} lavor${ys.length===1?"o":"i"}</span><span class="atot">${money(ys)}</span></summary>
+      <table><thead><tr><th>Lavoro</th><th>Consegna</th><th>Pagato il</th><th style="text-align:right">Importo</th><th>Note</th></tr></thead><tbody>
+      ${ys.map(j=>`<tr class="row" data-id="${j.id}"><td><b>${esc(j.descrizione)}</b>${!scope?`<div class="owner">${avatar(utOf(j),1)} ${esc(userName(utOf(j)))}</div>`:""}</td><td>${fmtD(j.consegna)}</td>
+        <td>${j.dataPagamento?fmtD(j.dataPagamento):'<span class="hint">—</span>'}</td><td class="num">${eur(j.importo)}${j.numFattura?`<div class="hint">Fatt. ${esc(j.numFattura)}</div>`:""}</td><td><div class="note">${esc(j.note)}</div></td></tr>`).join("")}
+      </tbody></table></details>`}).join("")}</details>`}).join("");
+  const w=$("#archWrap");
+  w.querySelectorAll("details").forEach(d=>d.ontoggle=()=>{if(!openAll)archOpen[d.dataset.k]=d.open});
+  w.querySelectorAll("tr.row").forEach(tr=>tr.onclick=()=>openJob(db.lavori.find(j=>j.id===tr.dataset.id)));
+}
+$("#aUser").onchange=()=>{$("#aUser").dataset.v=$("#aUser").value;renderArchive()};
+$("#qa").oninput=renderArchive;
+$("#aOpenAll").onclick=()=>{$("#archWrap").querySelectorAll("details").forEach(d=>{d.open=true;archOpen[d.dataset.k]=true})};
+$("#aCloseAll").onclick=()=>{$("#archWrap").querySelectorAll("details").forEach(d=>{d.open=false;archOpen[d.dataset.k]=false})};
+
+
+/* ---------- Telefono: schede al posto della tabella, menu ⋯, ridisegno quando il Fold si apre/chiude ---------- */
+const isNarrow=()=>matchMedia("(max-width:900px)").matches;
+$("#btnMore").onclick=e=>{e.stopPropagation();document.querySelector("header").classList.toggle("more")};
+document.addEventListener("click",e=>{if(!e.target.closest("header"))document.querySelector("header").classList.remove("more")});
+let _rsz,_wasNarrow=isNarrow();
+window.addEventListener("resize",()=>{clearTimeout(_rsz);_rsz=setTimeout(()=>{const n=isNarrow();if(n!==_wasNarrow||n){_wasNarrow=n;render()}},200)});
+
+/* ---------- Appunti ---------- */
+let editNote=null;
+const noteVis=n=>n.utente===me||n.condiviso;
+function fillNoteSelects(cli,job){
+  const cs=[...db.clienti].sort((a,b)=>a.nome.localeCompare(b.nome));
+  $("#nCli").innerHTML='<option value="">— nessuno —</option>'+cs.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join("");
+  $("#nCli").value=cli||"";fillNoteJobs(job)}
+function fillNoteJobs(job){
+  const c=$("#nCli").value;
+  const js=db.lavori.filter(j=>!c||j.cliente===c).sort((a,b)=>(b.consegna||"").localeCompare(a.consegna||""));
+  $("#nJob").innerHTML='<option value="">— nessuno —</option>'+js.map(j=>`<option value="${j.id}">${esc(j.descrizione)}${c?"":" · "+esc(cliName(j.cliente))}</option>`).join("");
+  $("#nJob").value=js.some(j=>j.id===job)?job:""}
+$("#nCli").onchange=()=>fillNoteJobs($("#nJob").value);
+$("#nJob").onchange=()=>{const j=db.lavori.find(x=>x.id===$("#nJob").value);if(j&&!$("#nCli").value){$("#nCli").value=j.cliente||"";fillNoteJobs(j.id)}};
+function openNote(n,pre){
+  editNote=n||null;const ro=!!n&&n.utente!==me;
+  $("#dNote").classList.toggle("ro",ro);
+  $("#formNote").querySelectorAll(".db input,.db select,.db textarea").forEach(el=>el.disabled=ro);
+  $("#dNoteTitle").innerHTML=ro?`Appunto di ${esc(userName(n.utente))} <span class="hint">(solo consultazione)</span>`:n?"Modifica appunto":"Nuovo appunto";
+  $("#nData").value=n?n.data||"":(pre?.data??today());$("#nOra").value=n?.ora||"";$("#nTesto").value=n?.testo||"";
+  fillNoteSelects(n?.cliente??pre?.cliente,n?.lavoro??pre?.lavoro);
+  $("#nShare").checked=n?!!n.condiviso:!!pre?.condiviso;$("#nDone").checked=!!n?.fatto;
+  $("#btnDelNote").style.visibility=n&&!ro?"visible":"hidden";$("#btnSaveNote").style.display=ro?"none":"";
+  $("#dNote").showModal();if(!n)setTimeout(()=>$("#nTesto").focus(),50)}
+$("#formNote").onsubmit=e=>{
+  e.preventDefault();if(editNote&&editNote.utente!==me)return;
+  let n=editNote?db.appunti.find(x=>x.id===editNote.id):null;
+  if(!n){n={id:uid(),creato:today(),utente:me};db.appunti.push(n)}
+  Object.assign(n,{data:$("#nData").value,ora:$("#nOra").value,testo:$("#nTesto").value.trim(),cliente:$("#nCli").value,lavoro:$("#nJob").value,
+    condiviso:$("#nShare").checked,fatto:$("#nDone").checked});
+  touch(n);delete db.eliminati[n.id];save();$("#dNote").close();render()};
+$("#btnDelNote").onclick=()=>{if(editNote&&confirm("Eliminare questo appunto?")){db.appunti=db.appunti.filter(x=>x.id!==editNote.id);markDel(editNote.id);save();$("#dNote").close();render()}};
+$("#btnNewNote").onclick=()=>openNote();
+$("#qn").oninput=()=>renderNotes();$("#fNote").onchange=()=>renderNotes();$("#fNoteDone").onchange=()=>renderNotes();
+function renderNotes(){
+  const q=$("#qn").value.toLowerCase(),f=$("#fNote").value,showDone=$("#fNoteDone").checked,t=today();
+  const jobName=id=>(db.lavori.find(j=>j.id===id)||{}).descrizione;
+  let list=db.appunti.filter(n=>noteVis(n)&&(f==="tutti"||(f==="miei"?n.utente===me:n.utente!==me))&&(showDone||!n.fatto)
+    &&(!q||(n.testo+" "+cliName(n.cliente)+" "+(jobName(n.lavoro)||"")).toLowerCase().includes(q)));
+  if(!list.length){$("#notesWrap").innerHTML=`<div class="empty">${db.appunti.some(noteVis)?"Nessun appunto da mostrare.":"Nessun appunto. Clicca <b>+ Nuovo appunto</b>: scegli tu la data, e se vuoi lo colleghi a un cliente o a un lavoro."}</div>`;return}
+  const key=n=>(n.data||"9999")+(n.ora||"99");list.sort((a,b)=>key(a).localeCompare(key(b)));
+  const grp=n=>n.fatto?"Fatti":!n.data?"Senza data":n.data<t?"In ritardo":n.data===t?"Oggi":"Prossimi";
+  const order=["In ritardo","Oggi","Prossimi","Senza data","Fatti"];
+  const card=n=>{const g=grp(n),cls=n.fatto?"done":g==="In ritardo"?"nlate":g==="Oggi"?"ntoday":"";const mine=n.utente===me;
+    const jn=n.lavoro&&jobName(n.lavoro);
+    return `<div class="ncard ${cls}" data-id="${n.id}">${mine?`<input type="checkbox" class="ck" data-id="${n.id}" ${n.fatto?"checked":""} title="Fatto">`:""}
+      <div class="nbody"><div class="ndate">${n.data?"📅 "+fmtD(n.data)+(n.ora?" · "+n.ora:""):"Senza data"}</div>
+      <div class="ntxt">${esc(n.testo)}</div>
+      <div class="nchips">${n.cliente?`<span class="chip">🏢 ${esc(cliName(n.cliente))}</span>`:""}${jn?`<span class="chip lk" data-job="${n.lavoro}">📋 ${esc(jn)}</span>`:""}
+      ${n.condiviso?'<span class="chip sh">👥 Condiviso</span>':""}${!mine?`<span class="owner">${avatar(n.utente,1)} ${esc(userName(n.utente))}</span>`:""}</div></div></div>`};
+  $("#notesWrap").innerHTML=order.map(g=>{const it=list.filter(n=>grp(n)===g);return it.length?`<div class="nh">${g} · ${it.length}</div><div class="nlist">${it.map(card).join("")}</div>`:""}).join("");
+  const w=$("#notesWrap");
+  w.querySelectorAll(".ncard").forEach(c=>c.onclick=e=>{if(e.target.closest(".ck,.lk"))return;openNote(db.appunti.find(n=>n.id===c.dataset.id))});
+  w.querySelectorAll(".ck").forEach(c=>c.onchange=()=>{const n=db.appunti.find(x=>x.id===c.dataset.id);if(n){n.fatto=c.checked;touch(n);save();renderNotes()}});
+  w.querySelectorAll(".lk").forEach(c=>c.onclick=()=>{const j=db.lavori.find(x=>x.id===c.dataset.job);if(j)openJob(j)});
+}
+$("#btnJobNote").onclick=()=>{const j=editJob;$("#dJob").close();openNote(null,{cliente:j?.cliente,lavoro:j?.id})};
+
+/* ---------- Clienti ---------- */
+function renderClients(){
+  const q=$("#qc").value.toLowerCase();
+  const list=db.clienti.filter(c=>!q||(c.nome+" "+(c.tel||"")+" "+(c.mail||"")).toLowerCase().includes(q)).sort((a,b)=>a.nome.localeCompare(b.nome));
+  if(!db.clienti.length){$("#clientsWrap").innerHTML='<div class="empty">Nessun cliente. Aggiungili qui o direttamente quando crei un lavoro.</div>';return}
+  $("#clientsWrap").innerHTML=`<table><thead><tr><th>Nome</th><th>Telefono</th><th>Email</th><th>Indirizzo / P.IVA</th><th>Lavori</th><th style="text-align:right">Da incassare</th><th>Note</th></tr></thead><tbody>${list.map(c=>{
+    const js=db.lavori.filter(j=>j.cliente===c.id),att=js.filter(j=>j.stato!=3).length;
+    const due=js.reduce((s,j)=>s+Math.max(0,(+j.importo||0)-(+j.incassato||0)),0);
+    return `<tr class="row" data-id="${c.id}"><td><b>${esc(c.nome)}</b></td><td>${esc(c.tel)}</td><td>${esc(c.mail)}</td><td>${esc(c.addr)}</td>
+    <td>${js.length}${att?` <span class="hint">(${att} aperti)</span>`:""}</td><td class="num">${due?eur(due):""}</td><td><div class="note">${esc(c.note)}</div></td></tr>`}).join("")}</tbody></table>`;
+  $("#clientsWrap").querySelectorAll("tr.row").forEach(tr=>tr.onclick=()=>openCli(db.clienti.find(c=>c.id===tr.dataset.id)));
+}
+$("#qc").addEventListener("input",renderClients);
+function openCli(c){
+  editCli=c||null;$("#dCliTitle").textContent=c?"Modifica cliente":"Nuovo cliente";
+  $("#cNome").value=c?.nome||"";$("#cTel").value=c?.tel||"";$("#cMail").value=c?.mail||"";$("#cAddr").value=c?.addr||"";$("#cNote").value=c?.note||"";
+  $("#btnDelCli").style.visibility=c?"visible":"hidden";$("#dCli").showModal();
+}
+$("#btnNewCli").onclick=()=>openCli();
+$("#formCli").onsubmit=e=>{
+  e.preventDefault();let c=editCli?db.clienti.find(x=>x.id===editCli.id):null;
+  if(!c){c=editCli||{id:uid()};db.clienti.push(c)}
+  Object.assign(c,{nome:$("#cNome").value.trim(),tel:$("#cTel").value.trim(),mail:$("#cMail").value.trim(),addr:$("#cAddr").value.trim(),note:$("#cNote").value});
+  touch(c);delete db.eliminati[c.id];save();$("#dCli").close();render();
+};
+$("#btnDelCli").onclick=()=>{
+  if(!editCli)return;const n=db.lavori.filter(j=>j.cliente===editCli.id).length;
+  if(n){alert(`Non puoi eliminare questo cliente: ha ${n} lavori collegati. Elimina o sposta prima i lavori.`);return}
+  if(confirm("Eliminare il cliente "+editCli.nome+"?")){db.clienti=db.clienti.filter(x=>x.id!==editCli.id);markDel(editCli.id);save();$("#dCli").close();render()}
+};
+
+function fillUsers(){
+  const f=$("#fUser"),v=f.value;f.innerHTML='<option value="">👥 Tutto il team</option>';
+  db.utenti.filter(u=>u.id!==me).forEach(u=>f.add(new Option("👤 "+u.nome,u.id)));
+  f.value=[...f.options].some(o=>o.value===v)?v:(f.options[1]?.value||"");
+  if(me)$("#userChip").innerHTML=`${avatar(me,1)} ${esc(userName(me))} ▾`;
+}
+$("#fUser").addEventListener("input",renderJobs);
+function render(){fillUsers();fillCliSelects($("#jCli").value);renderJobs();renderClients();renderArchive();renderNotes()}
+let lastUser="";try{lastUser=localStorage.getItem(LS+"-user")||""}catch(e){}
+function showLogin(){
+  $("#ulist").innerHTML=db.utenti.map(u=>`<button class="ubtn${u.id===lastUser?" last":""}" data-id="${u.id}">${avatar(u.id)}<span>${esc(u.nome)}</span></button>`).join("");
+  $("#ulist").querySelectorAll(".ubtn").forEach(b=>b.onclick=()=>login(b.dataset.id));
+  $("#login").hidden=false;
+}
+function login(id){me=id;lastUser=id;try{localStorage.setItem(LS+"-user",id)}catch(e){}
+  $("#login").hidden=true;document.title="Lavori · "+userName(id);
+  document.querySelector('.tabs button[data-tab="lavori"]').click();}
+$("#userChip").onclick=showLogin;
+function addUser(){const n=$("#newUser").value.trim();if(!n)return;
+  if(!db.utenti.some(u=>u.nome.toLowerCase()===n.toLowerCase())){db.utenti.push(touch({id:uid(),nome:n}));save()}
+  $("#newUser").value="";showLogin()}
+$("#btnNewUser").onclick=addUser;$("#newUser").onkeydown=e=>{if(e.key==="Enter")addUser()};
+
+/* ---------- Archivio online (Supabase) ---------- */
+// valori predefiniti del team: chi ha il programma si collega da solo
+const CLOUD_DEF={url:"https://gapjldkvztaaadlfqkre.supabase.co",key:"sb_publishable_2zdXG-45jS_-ohcP86E4dg_cwA5D7k6",codice:""};  // il codice del team NON e' nel programma: si scrive una volta e resta sul PC
+let cloud={...CLOUD_DEF};try{const c=JSON.parse(localStorage.getItem(LS+"-cloud")||"null");if(c)cloud=c}catch(e){}
+const cloudOn=()=>!!(cloud.url&&cloud.key&&cloud.codice&&!cloud.off&&!/^__/.test(cloud.url));
+let remoteMod={},syncing=false,syncAgain=false;
+function setCloud(t,cls){const b=$("#btnCloud");b.textContent=t;b.className="b"+(cls?" "+cls:"")}
+async function rpc(fn,body){
+  const h={"apikey":cloud.key,"Content-Type":"application/json"};if(/^eyJ/.test(cloud.key))h.Authorization="Bearer "+cloud.key;
+  const r=await fetch(cloud.url.trim().replace(/\/+$/,"")+"/rest/v1/rpc/"+fn,{method:"POST",headers:h,body:JSON.stringify(body)});
+  if(!r.ok){const t=await r.text();const e=new Error(t);e.status=r.status;throw e}
+  return r.json()}
+async function cloudSync(){
+  if(!cloudOn()){setCloud(cloud.off?"☁ Online: spento":(!cloud.codice&&!/^__/.test(cloud.url)?"☁ Inserisci codice":"☁ Online: spento"),!cloud.off&&!cloud.codice?"ko":"");return}
+  if(syncing){syncAgain=true;return}syncing=true;
+  try{
+    const rows=await rpc("lavori_leggi",{codice:cloud.codice});
+    const rem={clienti:[],lavori:[],utenti:[],appunti:[],eliminati:{}};remoteMod={};
+    for(const r of rows){remoteMod[r.id]=+r.mod;if(r.eliminato)rem.eliminati[r.id]=+r.mod;else if(rem[r.tipo]&&r.dati)rem[r.tipo].push(r.dati)}
+    const before=JSON.stringify(db);
+    db=merge(db,rem);
+    const out=[];
+    for(const kind of["clienti","lavori","utenti","appunti"])for(const x of db[kind]){const m=x.mod||0;if(!(x.id in remoteMod)||remoteMod[x.id]<m)out.push({id:x.id,tipo:kind,dati:x,mod:m,eliminato:false})}
+    for(const[id,t]of Object.entries(db.eliminati))if(!(id in remoteMod)||remoteMod[id]<t)out.push({id,tipo:"del",dati:null,mod:t,eliminato:true});
+    for(let i=0;i<out.length;i+=200)await rpc("lavori_scrivi",{codice:cloud.codice,righe:out.slice(i,i+200)});
+    out.forEach(o=>remoteMod[o.id]=o.mod);
+    if(JSON.stringify(db)!==before){try{localStorage.setItem(LS,JSON.stringify(db))}catch(e){}if(fileHandle)await writeFile();render()}
+    setCloud("☁ Online "+new Date().toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"}),"ok");
+  }catch(e){
+    if(/codice errato/.test(e.message))setCloud("☁ Codice errato","ko");
+    else if(e.status===404)setCloud("☁ Tabelle mancanti","ko");
+    else if(e.status===401||e.status===403)setCloud("☁ Chiave errata","ko");
+    else setCloud("☁ Non in linea","ko");
+    console.warn("sync",e);
+  }finally{syncing=false;if(syncAgain){syncAgain=false;setTimeout(cloudSync,500)}}
+}
+setInterval(cloudSync,15000);
+window.addEventListener("online",()=>cloudSync());
+$("#btnCloud").onclick=()=>{$("#cUrl").value=/^__/.test(cloud.url)?"":cloud.url;$("#cKey").value=/^__/.test(cloud.key)?"":cloud.key;$("#cCode").value=cloud.codice;$("#cOff").checked=!!cloud.off;$("#dCloud").showModal()};
+$("#btnCloudSave").onclick=()=>{cloud={url:$("#cUrl").value.trim(),key:$("#cKey").value.trim(),codice:$("#cCode").value.trim(),off:$("#cOff").checked};
+  try{localStorage.setItem(LS+"-cloud",JSON.stringify(cloud))}catch(e){}$("#dCloud").close();cloudSync()};
+$("#btnCloudReset").onclick=()=>{try{localStorage.removeItem(LS+"-cloud")}catch(e){}cloud={...CLOUD_DEF};$("#dCloud").close();cloudSync()};
+
+/* ---------- Avvio ---------- */
+(async()=>{
+  load();
+  fileHandle=await idbGet();
+  if(fileHandle){
+    try{if(await fileHandle.queryPermission({mode:"readwrite"})==="granted"){await readFromHandle(fileHandle);setState("✔ Collegato a "+fileHandle.name)}else showReconnect()}
+    catch(e){showReconnect()}
+  }else setState("Salvato nel browser");
+  $("#viewSw").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x.dataset.v===view));
+  showLogin();
+  if(!cloud.codice&&!cloud.off&&cloud.url&&!/^__/.test(cloud.url))setTimeout(askCode,600);
+  cloudSync();
+})();
+function askCode(){
+  const v=prompt("Archivio online condiviso\n\nScrivi il codice del team (te lo dà Jacopo).\nLo chiede solo questa volta.","");
+  if(v===null||!v.trim()){setCloud("☁ Inserisci codice","ko");return}
+  cloud={...cloud,codice:v.trim().toUpperCase()};try{localStorage.setItem(LS+"-cloud",JSON.stringify(cloud))}catch(e){}cloudSync()}
+</script>
+</body>
+</html>
