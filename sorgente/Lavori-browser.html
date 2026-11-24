@@ -192,6 +192,18 @@ dialog::backdrop{background:rgba(20,25,35,.45)}
 .chk{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;color:var(--ink)!important;font-size:14px!important}
 .chk input{width:20px;height:20px;min-height:0}
 @media (max-width:900px){.tabs button[data-tab=appunti]::before{content:"📝"}}
+
+/* ----- popup incassi per mese ----- */
+.sum div.sinc{position:relative;cursor:default}
+.mpop{display:none;position:absolute;top:calc(100% + 8px);left:0;z-index:30;background:var(--card);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 12px 36px rgba(0,0,0,.16);padding:12px 14px;min-width:380px;max-height:70vh;overflow:auto;cursor:default}
+.sinc:hover .mpop,.sinc.open .mpop{display:block}
+.mpop h4{margin:0 0 2px;font-size:14px}.mpop .hint{display:block;margin-bottom:8px}
+.mpop table{border:0;border-radius:0;font-size:13px}.mpop th,.mpop td{padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.mpop th{cursor:default;background:none}.mpop td.num{text-align:right}.mpop tr.tot td{font-weight:700;border-bottom:0}
+.mpop .lt{color:var(--red)}.mpop .cur td{background:#f7f6ff}
+@media (max-width:900px){.sinc{cursor:pointer}.sinc:hover .mpop{display:none}.sinc.open .mpop{display:block}
+  .mpop{position:fixed;left:8px;right:8px;top:auto;bottom:calc(76px + env(safe-area-inset-bottom));min-width:0;max-height:60vh}.mpop th,.mpop td{padding:5px 4px;font-size:12px}.mpop table{width:100%}}
 </style>
 </head>
 <body>
@@ -511,6 +523,24 @@ function renderJobs(){
   const late=att.filter(j=>j.consegna&&j.consegna<t).length;
   const daInc=base.reduce((s,j)=>s+Math.max(0,(+j.importo||0)-(+j.incassato||0)),0);
   $("#summary").innerHTML=`<div><b>${att.length}</b><span>Lavori da consegnare</span></div><div><b style="color:${late?'var(--red)':''}">${late}</b><span>In ritardo</span></div><div><b>${eur(daInc)}</b><span>Da incassare</span><small class="netto" id="netto" title="Clic per cambiare la percentuale di tasse">Netto ≈ ${eur(daInc*(1-TAX/100))} <i>(−${TAX}% tasse)</i></small></div>`;
+  // popup incassi per mese (passa il mouse; sul telefono tocca il riquadro)
+  {const all=db.lavori.filter(j=>!scope||utOf(j)===scope),mesi={},ym=d=>d?d.slice(0,7):"";
+   const cur=today().slice(0,7);
+   for(const j of all){const imp=+j.importo||0,inc=Math.min(+j.incassato||0,imp||Infinity);
+     if(pagStato(j)!==2&&imp>0){const m=ym(scadOf(j)||j.consegna)||"zz";(mesi[m]??={p:0,i:0}).p+=imp-(+j.incassato||0)}
+     if(inc>0&&j.dataPagamento){const m=ym(j.dataPagamento);(mesi[m]??={p:0,i:0}).i+=inc}}
+   const lim=(()=>{const d=new Date();d.setMonth(d.getMonth()-11);return d.toISOString().slice(0,7)})();
+   const keys=Object.keys(mesi).filter(m=>m==="zz"||m>=lim||mesi[m].p>0).sort();
+   const nm=m=>m==="zz"?"Senza data":new Date(m+"-15").toLocaleDateString("it-IT",{month:"long",year:"numeric"});
+   let tp=0,ti=0;const rows=keys.map(m=>{const r=mesi[m];tp+=r.p;ti+=r.i;const late=m!=="zz"&&m<cur&&r.p>0;
+     return `<tr class="${m===cur?"cur":""}"><td>${nm(m)}${m===cur?" <span class='hint' style='display:inline'>(questo mese)</span>":""}</td>
+       <td class="num ${late?"lt":""}">${r.p?eur(r.p)+(late?" ⚠":""):"—"}</td><td class="num">${r.i?eur(r.i):"—"}</td></tr>`}).join("");
+   const box=$("#summary").children[2];box.classList.add("sinc");if(window._mpopOpen)box.classList.add("open");
+   box.insertAdjacentHTML("beforeend",`<div class="mpop" onclick="event.stopPropagation()"><h4>Incassi per mese</h4>
+     <span class="hint">Da incassare: mese di scadenza del pagamento (se manca, della consegna). Incassato: mese in cui è stato pagato (ultimi 12 mesi).</span>
+     ${keys.length?`<table><thead><tr><th>Mese</th><th style="text-align:right">Da incassare</th><th style="text-align:right">Incassato</th></tr></thead><tbody>${rows}
+     <tr class="tot"><td>Totale</td><td class="num">${eur(tp)}</td><td class="num">${eur(ti)}</td></tr></tbody></table>`:'<span class="hint">Nessun importo ancora.</span>'}</div>`);
+   box.onclick=e=>{if(e.target.closest("#netto"))return;window._mpopOpen=box.classList.toggle("open")};}
   $("#netto").onclick=()=>{const v=prompt("Percentuale di tasse da togliere per il netto:",TAX);if(v===null)return;const n=parseFloat(String(v).replace(",","."));
     if(isNaN(n)||n<0||n>100){alert("Scrivi un numero tra 0 e 100");return}TAX=n;try{localStorage.setItem(LS+"-tasse",n)}catch(e){}renderJobs()};
   if(!base.length){$("#jobsWrap").innerHTML=team?'<div class="empty">Nessun lavoro da mostrare.</div>':'<div class="empty">Nessun lavoro ancora. Clicca <b>+ Nuovo lavoro</b> per iniziare.</div>';return}
@@ -662,6 +692,7 @@ $("#aCloseAll").onclick=()=>{$("#archWrap").querySelectorAll("details").forEach(
 const isNarrow=()=>matchMedia("(max-width:900px)").matches;
 $("#btnMore").onclick=e=>{e.stopPropagation();document.querySelector("header").classList.toggle("more")};
 document.addEventListener("click",e=>{if(!e.target.closest("header"))document.querySelector("header").classList.remove("more")});
+document.addEventListener("click",e=>{if(!e.target.closest(".sinc")){window._mpopOpen=false;document.querySelectorAll(".sinc.open").forEach(x=>x.classList.remove("open"))}});
 let _rsz,_wasNarrow=isNarrow();
 window.addEventListener("resize",()=>{clearTimeout(_rsz);_rsz=setTimeout(()=>{const n=isNarrow();if(n!==_wasNarrow||n){_wasNarrow=n;render()}},200)});
 
